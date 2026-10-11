@@ -13,6 +13,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import AdaptiveFit from '@/pages/AdaptiveFit';
+import SignLearn from '@/pages/SignLearn';
 import ModelSandbox from '@/pages/ModelSandbox';
 import AgentLab from '@/pages/AgentLab';
 import Whitepaper from '@/pages/Whitepaper';
@@ -46,7 +47,8 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       {/* Add your page Route elements here */}
-      <Route path="/" element={<AdaptiveFit />} />
+      <Route path="/" element={<SignLearn />} />
+      <Route path="/exercise" element={<AdaptiveFit />} />
       <Route path="/sandbox" element={<ModelSandbox />} />
       <Route path="/agent-lab" element={<AgentLab />} />
       <Route path="/whitepaper" element={<Whitepaper />} />
