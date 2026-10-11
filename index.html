@@ -5,7 +5,11 @@
     <link rel="icon" type="image/svg+xml" href="https://base44.com/logo_v2.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="manifest" href="/manifest.json" />
-    <title>Base44 APP</title>
+    <title>AdaptiveFit — AI Seated Exercise Coach</title>
+    <meta name="description" content="A multimodal AI seated exercise coach for wheelchair users: vision pose detection plus a reasoning model and spoken corrections." />
+    <!-- Vision model: TensorFlow.js + MoveNet pose detection, loaded non-blocking from CDN. -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
   </head>
   <body>
     <div id="root"></div>

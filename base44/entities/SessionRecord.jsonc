@@ -1,0 +1,46 @@
+{
+  "name": "SessionRecord",
+  "type": "object",
+  "properties": {
+    "body_parts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Body parts the user could move during this session"
+    },
+    "exercises": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Names of exercises performed"
+    },
+    "reps_completed": {
+      "type": "number",
+      "default": 0
+    },
+    "target_reps": {
+      "type": "number",
+      "default": 0
+    },
+    "corrections_count": {
+      "type": "number",
+      "default": 0
+    },
+    "duration_seconds": {
+      "type": "number",
+      "default": 0
+    },
+    "summary": {
+      "type": "string"
+    },
+    "focus_next": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "exercises",
+    "reps_completed"
+  ]
+}
