@@ -37,6 +37,14 @@
     },
     "focus_next": {
       "type": "string"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user who completed the session"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user who completed the session"
     }
   },
   "required": [

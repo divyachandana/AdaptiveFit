@@ -51,7 +51,8 @@ export default function AdaptiveFit() {
   // Load goals and progress from the database
   const loadGoalsAndProgress = useCallback(async () => {
     try {
-      let result = await base44.entities.Goal.filter({}, { limit: 1 });
+      const me = await base44.auth.me();
+      let result = await base44.entities.Goal.filter({ created_by_id: me.id }, { limit: 1 });
       if (!result.items?.length) {
         const created = await base44.entities.Goal.create({
           daily_reps_target: 15,
@@ -69,11 +70,11 @@ export default function AdaptiveFit() {
 
       const [todayAgg, weekAgg] = await Promise.all([
         base44.entities.SessionRecord.aggregate({
-          query: { created_date: { $gte: todayStart.toISOString() } },
+          query: { user_id: me.id, created_date: { $gte: todayStart.toISOString() } },
           sum: "reps_completed"
         }),
         base44.entities.SessionRecord.aggregate({
-          query: { created_date: { $gte: weekStart.toISOString() } },
+          query: { user_id: me.id, created_date: { $gte: weekStart.toISOString() } },
           sum: "reps_completed"
         })
       ]);

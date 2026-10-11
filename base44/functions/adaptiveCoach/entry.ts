@@ -129,9 +129,12 @@ export default async function (req) {
       };
       const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, response_json_schema: schema });
       const data = res.data || res;
-      // Persist the session record (service role; public demo, single user).
+      // Persist the session record to the signed-in user's history.
       try {
+        const user = await base44.auth.me().catch(() => null);
         await base44.asServiceRole.entities.SessionRecord.create({
+          user_id: user?.id || "",
+          user_email: user?.email || "",
           body_parts: body.bodyParts || [],
           exercises: exercises.map(e => e.name),
           reps_completed: totalReps,

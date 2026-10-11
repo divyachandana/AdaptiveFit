@@ -20,10 +20,11 @@ export default function Dashboard() {
         if (p) { setData({ goal: p.goal, stats: buildStats(p.rows, p.goal.daily_reps_target), sessions: p.sessions, patient: p }); return; }
       }
       const since = new Date(); since.setHours(0, 0, 0, 0); since.setDate(since.getDate() - 60);
+      const me = await base44.auth.me();
       const [goalRes, agg, recent] = await Promise.all([
-        base44.entities.Goal.filter({}, { limit: 1 }),
-        base44.entities.SessionRecord.aggregate({ query: { created_date: { $gte: since.toISOString() } }, dateBucket: { field: "created_date", unit: "day" }, sum: "reps_completed", limit: 100 }),
-        base44.entities.SessionRecord.filter({}, { sort: "-created_date", limit: 30 })
+        base44.entities.Goal.filter({ created_by_id: me.id }, { limit: 1 }),
+        base44.entities.SessionRecord.aggregate({ query: { user_id: me.id, created_date: { $gte: since.toISOString() } }, dateBucket: { field: "created_date", unit: "day" }, sum: "reps_completed", limit: 100 }),
+        base44.entities.SessionRecord.filter({ user_id: me.id }, { sort: "-created_date", limit: 30 })
       ]);
       const goal = goalRes.items?.[0] || { daily_reps_target: 15, weekly_reps_target: 60 };
       setData({ goal, stats: buildStats(agg.rows || [], goal.daily_reps_target), sessions: recent.items || [] });
