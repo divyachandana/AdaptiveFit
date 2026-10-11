@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import AdaptiveFit from '@/pages/AdaptiveFit';
+import ModelSandbox from '@/pages/ModelSandbox';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -37,6 +38,7 @@ const AuthenticatedApp = () => {
     <Routes>
       {/* Add your page Route elements here */}
       <Route path="/" element={<AdaptiveFit />} />
+      <Route path="/sandbox" element={<ModelSandbox />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
