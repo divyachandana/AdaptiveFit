@@ -166,6 +166,7 @@ export default function AdaptiveFit() {
         </div>
         <div className="flex items-center gap-4">
           <Link to="/dashboard" className="text-xs font-medium text-neutral-600 hover:text-neutral-900 transition-colors hidden sm:block">Progress</Link>
+          <Link to="/history" className="text-xs font-medium text-neutral-600 hover:text-neutral-900 transition-colors hidden sm:block">History</Link>
           <span className="text-xs text-neutral-400 hidden sm:block">Seated exercise · multimodal AI coach</span>
         </div>
       </header>

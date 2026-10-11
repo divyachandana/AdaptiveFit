@@ -12,6 +12,7 @@ import ModelSandbox from '@/pages/ModelSandbox';
 import AgentLab from '@/pages/AgentLab';
 import Whitepaper from '@/pages/Whitepaper';
 import Dashboard from '@/pages/Dashboard';
+import History from '@/pages/History';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -45,6 +46,7 @@ const AuthenticatedApp = () => {
       <Route path="/agent-lab" element={<AgentLab />} />
       <Route path="/whitepaper" element={<Whitepaper />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/history" element={<History />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

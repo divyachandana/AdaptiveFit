@@ -82,7 +82,10 @@ export default function Dashboard() {
           <ArrowLeft className="w-4 h-4" />
           <span className="text-sm font-medium">Back to Coach</span>
         </Link>
-        <span className="text-xs text-neutral-400 hidden sm:block">Your Progress</span>
+        <div className="flex items-center gap-4">
+          <Link to="/history" className="text-xs font-medium text-neutral-600 hover:text-neutral-900 transition-colors hidden sm:block">History</Link>
+          <span className="text-xs text-neutral-400 hidden sm:block">Your Progress</span>
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-5 py-8">
