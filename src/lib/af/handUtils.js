@@ -46,6 +46,31 @@ export function extractHandLandmarks(results, videoWidth, videoHeight) {
   }));
 }
 
+// Extract all detected hands as an array of landmark arrays.
+export function extractAllHandLandmarks(results, videoWidth, videoHeight) {
+  const lm = results?.multiHandLandmarks;
+  if (!lm || lm.length === 0) return [];
+  return lm.map(hand => hand.map(p => ({
+    x: p.x * (videoWidth || 640),
+    y: p.y * (videoHeight || 480),
+    z: p.z || 0,
+    score: p.visibility != null ? p.visibility : 1
+  })));
+}
+
+// Pick the hand with the highest average confidence for coaching.
+export function pickBestHand(allHands) {
+  if (!allHands || allHands.length === 0) return null;
+  if (allHands.length === 1) return allHands[0];
+  let best = allHands[0];
+  let bestConf = handConfidence(best);
+  for (let i = 1; i < allHands.length; i++) {
+    const c = handConfidence(allHands[i]);
+    if (c > bestConf) { best = allHands[i]; bestConf = c; }
+  }
+  return best;
+}
+
 // Average confidence of key landmarks (wrist + knuckles + fingertips).
 export function handConfidence(landmarks) {
   if (!landmarks) return 0;

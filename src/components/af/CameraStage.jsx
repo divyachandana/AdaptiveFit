@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
-import { extractHandLandmarks, HAND_CONNECTIONS, FINGER_TIP_INDEX } from "@/lib/af/handUtils";
+import { extractAllHandLandmarks, pickBestHand, HAND_CONNECTIONS, FINGER_TIP_INDEX } from "@/lib/af/handUtils";
 
 // Vision model loaded from CDN (see index.html). MediaPipe Hands detects
 // 21 landmarks per hand — enough to track individual finger extension.
@@ -57,7 +57,7 @@ const CameraStage = forwardRef(function CameraStage({ onPose, highlight, active,
           locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`
         });
         hands.setOptions({
-          maxNumHands: 1,
+          maxNumHands: 2,
           modelComplexity: 0,
           minDetectionConfidence: 0.5,
           minTrackingConfidence: 0.5
@@ -67,9 +67,10 @@ const CameraStage = forwardRef(function CameraStage({ onPose, highlight, active,
           const v = videoRef.current;
           const c = canvasRef.current;
           if (!v || !c) return;
-          const landmarks = extractHandLandmarks(results, v.videoWidth || 640, v.videoHeight || 480);
-          drawOverlay(c, landmarks, highlightRef.current);
-          onPoseRef.current?.(landmarks);
+          const allHands = extractAllHandLandmarks(results, v.videoWidth || 640, v.videoHeight || 480);
+          drawOverlay(c, allHands, highlightRef.current);
+          // Feed the higher-confidence hand to the coaching pipeline.
+          onPoseRef.current?.(pickBestHand(allHands));
         });
         if (cancelled) return;
         detectorRef.current = hands;
@@ -105,41 +106,45 @@ const CameraStage = forwardRef(function CameraStage({ onPose, highlight, active,
     rafRef.current = requestAnimationFrame(loop);
   }
 
-  function drawOverlay(canvas, landmarks, hl) {
+  function drawOverlay(canvas, allHands, hl) {
     const v = videoRef.current;
     const w = v?.videoWidth || 640, h = v?.videoHeight || 480;
     if (canvas.width !== w) canvas.width = w;
     if (canvas.height !== h) canvas.height = h;
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, w, h);
-    if (!landmarks) return;
+    if (!allHands || allHands.length === 0) return;
     const mx = (x) => w - x; // mirror because video is mirrored on display
     ctx.lineWidth = 4;
-    ctx.strokeStyle = "rgba(96,165,250,0.9)";
-    for (const [a, b] of HAND_CONNECTIONS) {
-      const pa = landmarks[a], pb = landmarks[b];
-      if (pa && pb) {
-        ctx.beginPath();
-        ctx.moveTo(mx(pa.x), pa.y);
-        ctx.lineTo(mx(pb.x), pb.y);
-        ctx.stroke();
-      }
-    }
+    const colors = ["rgba(96,165,250,0.9)", "rgba(167,139,250,0.9)"];
     const hlIdx = hl?.part ? FINGER_TIP_INDEX[hl.part] : null;
-    for (let i = 0; i < landmarks.length; i++) {
-      const p = landmarks[i];
-      if (!p) continue;
-      const isHL = i === hlIdx;
-      ctx.beginPath();
-      ctx.arc(mx(p.x), p.y, isHL ? 9 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = isHL ? "#fbbf24" : "rgba(255,255,255,0.95)";
-      ctx.fill();
-      if (isHL) {
+    for (let hi = 0; hi < allHands.length; hi++) {
+      const landmarks = allHands[hi];
+      ctx.strokeStyle = colors[hi % colors.length];
+      for (const [a, b] of HAND_CONNECTIONS) {
+        const pa = landmarks[a], pb = landmarks[b];
+        if (pa && pb) {
+          ctx.beginPath();
+          ctx.moveTo(mx(pa.x), pa.y);
+          ctx.lineTo(mx(pb.x), pb.y);
+          ctx.stroke();
+        }
+      }
+      for (let i = 0; i < landmarks.length; i++) {
+        const p = landmarks[i];
+        if (!p) continue;
+        const isHL = i === hlIdx;
         ctx.beginPath();
-        ctx.arc(mx(p.x), p.y, 14, 0, Math.PI * 2);
-        ctx.strokeStyle = "#fbbf24";
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        ctx.arc(mx(p.x), p.y, isHL ? 9 : 5, 0, Math.PI * 2);
+        ctx.fillStyle = isHL ? "#fbbf24" : "rgba(255,255,255,0.95)";
+        ctx.fill();
+        if (isHL) {
+          ctx.beginPath();
+          ctx.arc(mx(p.x), p.y, 14, 0, Math.PI * 2);
+          ctx.strokeStyle = "#fbbf24";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
       }
     }
   }
