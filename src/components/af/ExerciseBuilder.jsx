@@ -33,8 +33,8 @@ export default function ExerciseBuilder({ voiceSupported, onClose, onBuilt }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
-      <div className="w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh]">
+    <div className="w-full">
+      <div className="w-full bg-white rounded-2xl ring-1 ring-black/5 shadow-sm flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
           <div className="flex items-center gap-2">
@@ -52,7 +52,7 @@ export default function ExerciseBuilder({ voiceSupported, onClose, onBuilt }) {
         </div>
 
         {/* Conversation log */}
-        <div ref={logRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-neutral-50">
+        <div ref={logRef} className="h-72 overflow-y-auto px-5 py-4 space-y-3 bg-neutral-50">
           {messages.length === 0 && !thinking && (
             <p className="text-sm text-neutral-400 italic">
               {voiceSupported && supported ? "Tap the mic, then tell the coach what you want to work on — or type below." : "Type what you want to work on below."}

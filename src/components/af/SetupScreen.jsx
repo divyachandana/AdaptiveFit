@@ -48,16 +48,6 @@ export default function SetupScreen({ onStart, voiceSupported, routine, onSelect
 
       <div className="mt-8">
         <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">Routines</h2>
-        <button
-          onClick={() => setBuilderOpen(true)}
-          className="w-full mb-3 text-left rounded-2xl p-4 bg-gradient-to-r from-emerald-500 to-sky-500 text-white flex items-center gap-3 hover:opacity-95 transition-opacity"
-        >
-          <Sparkles className="w-5 h-5 shrink-0" />
-          <div>
-            <h3 className="font-semibold">Create your own exercise</h3>
-            <p className="text-sm text-white/85">Talk to the coach and design a custom movement.</p>
-          </div>
-        </button>
         <div className="grid sm:grid-cols-2 gap-3">
           {ROUTINES.map(r => (
             <button
@@ -91,6 +81,27 @@ export default function SetupScreen({ onStart, voiceSupported, routine, onSelect
             </button>
           ))}
         </div>
+
+        <div className="mt-3">
+          {builderOpen ? (
+            <ExerciseBuilder
+              voiceSupported={voiceSupported}
+              onClose={() => setBuilderOpen(false)}
+              onBuilt={handleBuilt}
+            />
+          ) : (
+            <button
+              onClick={() => setBuilderOpen(true)}
+              className="w-full text-left rounded-2xl p-4 bg-gradient-to-r from-emerald-500 to-sky-500 text-white flex items-center gap-3 hover:opacity-95 transition-opacity"
+            >
+              <Sparkles className="w-5 h-5 shrink-0" />
+              <div>
+                <h3 className="font-semibold">Create your own exercise</h3>
+                <p className="text-sm text-white/85">Talk to the coach and design a custom movement.</p>
+              </div>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={`mt-6 rounded-2xl p-4 ring-1 flex items-start gap-3 ${voiceSupported ? "bg-sky-50 ring-sky-100" : "bg-amber-50 ring-amber-100"}`}>
@@ -116,14 +127,6 @@ export default function SetupScreen({ onStart, voiceSupported, routine, onSelect
         {routine ? `Start ${routine.name}` : "Select a routine"}
         <ArrowRight className="w-5 h-5" />
       </button>
-
-      {builderOpen && (
-        <ExerciseBuilder
-          voiceSupported={voiceSupported}
-          onClose={() => setBuilderOpen(false)}
-          onBuilt={handleBuilt}
-        />
-      )}
     </div>
   );
 }
