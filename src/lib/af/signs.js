@@ -22,6 +22,8 @@ export const SIGNS = [
   { letter: "U", fingers: { index: "up", middle: "up", ring: "down", pinky: "down" }, spread: false, tip: "Raise your index and middle fingers pressed together." },
   { letter: "V", fingers: { index: "up", middle: "up", ring: "down", pinky: "down" }, spread: true, tip: "Raise your index and middle fingers apart in a V." },
   { letter: "W", fingers: { index: "up", middle: "up", ring: "up", pinky: "down" }, tip: "Raise index, middle and ring fingers apart, and hold your pinky with your thumb." },
+  { letter: "J", fingers: { index: "down", middle: "down", ring: "down", pinky: "up" }, thumb: "in", motion: { tip: 20 }, tip: "Make the I shape, then draw a J in the air with your pinky: down, then curve to the side." },
+  { letter: "Z", fingers: { index: "up", middle: "down", ring: "down", pinky: "down" }, motion: { tip: 8 }, tip: "Point your index finger and draw a Z in the air: across, diagonally down, then across again." },
   { letter: "Y", fingers: { index: "down", middle: "down", ring: "down", pinky: "up" }, thumb: "out", tip: "Curl your middle fingers and stretch out your thumb and pinky." }
 ];
 
@@ -34,6 +36,30 @@ export function readHand(lm) {
   const spread = d(lm[8], lm[12]) / (d(lm[5], lm[9]) || 1) > 1.6;
   const touch = d(lm[4], lm[8]) / palm < 0.3;
   return { fingers, thumb, spread, touch };
+}
+
+// Motion letters: checks the traced fingertip path (points in pixels).
+// Returns progress 0..1; 1 means the letter was traced.
+export function motionProgress(sign, trail, palm) {
+  if (trail.length < 4 || !palm) return 0;
+  const xs = trail.map(p => p.x), ys = trail.map(p => p.y);
+  const xSpan = (Math.max(...xs) - Math.min(...xs)) / palm;
+  const ySpan = (Math.max(...ys) - Math.min(...ys)) / palm;
+  if (sign.letter === "J") {
+    const down = (trail[trail.length - 1].y - trail[0].y) / palm;
+    return Math.min(Math.min(down / 0.6, 1) * 0.6 + Math.min(xSpan / 0.3, 1) * 0.4, 1);
+  }
+  // Z: count horizontal direction reversals
+  let dir = 0, reversals = 0, anchor = xs[0];
+  for (const x of xs) {
+    const dx = x - anchor;
+    if (Math.abs(dx) > palm * 0.25) {
+      const nd = Math.sign(dx);
+      if (dir && nd !== dir) reversals++;
+      dir = nd; anchor = x;
+    }
+  }
+  return Math.min(Math.min(reversals / 2, 1) * 0.6 + Math.min(xSpan / 0.7, 1) * 0.2 + Math.min(ySpan / 0.4, 1) * 0.2, 1);
 }
 
 // Returns { correct, issues: [string] } — issues are ordered by importance.

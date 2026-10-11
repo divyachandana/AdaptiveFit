@@ -10,7 +10,7 @@ export default function SignFeedback({ sign, result, hold, mastered }) {
         <p className="text-sm text-white/70 mt-5 max-w-sm mx-auto">{sign.tip}</p>
       </div>
       <div>
-        <div className="flex justify-between text-xs text-neutral-500 mb-1.5"><span>Hold steady</span><span>{Math.round(hold * 100)}%</span></div>
+        <div className="flex justify-between text-xs text-neutral-500 mb-1.5"><span>{sign.motion ? "Trace the letter" : "Hold steady"}</span><span>{Math.round(hold * 100)}%</span></div>
         <div className="h-3 rounded-full bg-neutral-100 overflow-hidden">
           <div className="h-full bg-emerald-500 transition-all duration-150" style={{ width: `${hold * 100}%` }} />
         </div>
@@ -18,7 +18,7 @@ export default function SignFeedback({ sign, result, hold, mastered }) {
       {mastered ? (
         <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 text-emerald-800 p-4 text-lg font-medium"><CheckCircle2 className="w-6 h-6" />Correct! Moving on…</div>
       ) : result.correct ? (
-        <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 text-emerald-800 p-4 text-lg font-medium"><CheckCircle2 className="w-6 h-6" />Great placement, hold it</div>
+        <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 text-emerald-800 p-4 text-lg font-medium"><CheckCircle2 className="w-6 h-6" />{sign.motion ? "Great shape, now draw the letter" : "Great placement, hold it"}</div>
       ) : (
         <ul className="space-y-2">
           {(result.issues.length ? result.issues : ["Show your hand to the camera"]).map((t) => (
