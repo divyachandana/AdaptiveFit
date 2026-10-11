@@ -242,8 +242,9 @@ export default function AdaptiveFit() {
         speak(`Great! ${repCount} reps done. Next: ${nextEx.name}.`, {
           force: true, interrupt: true, onEnd: () => {
             if (phaseRef.current !== "session") return;
-            setExerciseIndex(nextIdx);
-            advancingRef.current = false;
+            reset();              // clear the rep counter BEFORE loading the next
+            setExerciseIndex(nextIdx); // exercise, so the old count can't satisfy the
+            advancingRef.current = false; // new target and auto-advance the routine.
             exerciseCorrectionsRef.current = 0;
             lastCorrectionMsgRef.current = "";
             briefForExercise(nextEx, false);
@@ -258,7 +259,7 @@ export default function AdaptiveFit() {
         });
       }
     }
-  }, [repCount, phase, currentExercise, exerciseIndex, routine, briefForExercise, finishSession]);
+  }, [repCount, phase, currentExercise, exerciseIndex, routine, briefForExercise, finishSession, reset]);
 
   // Track corrections
   useEffect(() => {
