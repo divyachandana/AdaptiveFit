@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
-import { extractHands, handConfidence, HAND_CONNECTIONS, FINGER_TIP_INDEX } from "@/lib/af/handUtils";
+import { extractHands, HAND_CONNECTIONS, FINGER_TIP_INDEX } from "@/lib/af/handUtils";
 
 // Vision model loaded from CDN (see index.html). MediaPipe Hands detects
 // 21 landmarks per hand — enough to track individual finger extension.
@@ -68,10 +68,8 @@ const CameraStage = forwardRef(function CameraStage({ onPose, highlight, active,
           if (!v || !c) return;
           const detected = extractHands(results, v.videoWidth || 640, v.videoHeight || 480, sideRef.current);
           drawOverlay(c, detected, highlightRef.current);
-          // Feed the higher-confidence hand's landmarks to the coaching pipeline.
-          const best = detected.reduce((a, b) =>
-            handConfidence(a.landmarks) >= handConfidence(b.landmarks) ? a : b, null);
-          onPoseRef.current?.(best ? best.landmarks : null);
+          // The coach needs every detected hand for both-hands rep counting.
+          onPoseRef.current?.(detected);
         });
         if (cancelled) return;
         detectorRef.current = hands;

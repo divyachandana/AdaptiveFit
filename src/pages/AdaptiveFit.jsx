@@ -6,7 +6,7 @@ import CoachPanel from "@/components/af/CoachPanel";
 import SummaryScreen from "@/components/af/SummaryScreen";
 import { useLiveCoach } from "@/hooks/useLiveCoach";
 import { useVoiceConversation } from "@/hooks/useVoiceConversation";
-import { EXERCISE_LIBRARY, ROUTINES } from "@/lib/af/exercises";
+import { EXERCISE_LIBRARY } from "@/lib/af/exercises";
 import { speak, primeVoices, stopSpeaking } from "@/lib/af/speech";
 import { base44 } from "@/api/base44Client";
 

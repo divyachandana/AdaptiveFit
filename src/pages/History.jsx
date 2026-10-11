@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { History as HistoryIcon, ArrowLeft, Clock, Repeat, CheckCircle } from "lucide-react";
+import { History as HistoryIcon, ArrowLeft, Clock, Repeat } from "lucide-react";
 
 export default function History() {
   const [sessions, setSessions] = useState([]);

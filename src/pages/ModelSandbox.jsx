@@ -7,8 +7,8 @@ import SummaryPanel from "@/components/sandbox/SummaryPanel";
 import { createMetricsCollector } from "@/lib/sandbox/metrics";
 import { MODEL_REGISTRY } from "@/lib/sandbox/models";
 import { routeModel } from "@/lib/sandbox/router";
-import { isOk, isErr, unwrap } from "@/lib/sandbox/result";
-import { ALL_SCENARIOS, scenariosByCategory, getScenario } from "@/lib/sandbox/scenarios";
+import { isErr, unwrap } from "@/lib/sandbox/result";
+import { scenariosByCategory, getScenario } from "@/lib/sandbox/scenarios";
 import { Link } from "react-router-dom";
 
 const BENCHMARK_FRAMES = 60;
