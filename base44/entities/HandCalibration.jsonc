@@ -1,0 +1,38 @@
+{
+  "name": "HandCalibration",
+  "type": "object",
+  "properties": {
+    "letter": {
+      "type": "string",
+      "description": "ASL letter these samples are for"
+    },
+    "samples": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "description": "Normalized hand landmark vectors recorded by the user"
+    }
+  },
+  "required": [
+    "letter",
+    "samples"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

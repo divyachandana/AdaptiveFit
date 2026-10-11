@@ -2,6 +2,8 @@
 // hands are matched to the nearest recorded samples (k-nearest neighbours).
 // Samples are normalized (wrist at origin, scaled by palm size, left hands
 // mirrored) so position, distance from camera and hand side don't matter.
+import { base44 } from "@/api/base44Client";
+
 const KEY = "asl_calibration_v1";
 const MATCH_MAX = 0.55; // max average distance to count as a match
 const MARGIN = 0.08;    // best letter must beat the runner-up by this much
@@ -26,13 +28,48 @@ const dist = (a, b) => {
   return Math.sqrt(s / (a.length / 2));
 };
 
+// --- Account sync: recordings are mirrored to the signed-in user's profile ---
+const Cal = () => base44.entities.HandCalibration;
+async function me() {
+  return (await base44.auth.isAuthenticated()) ? base44.auth.me() : null;
+}
+async function pushLetter(letter, vectors) {
+  const user = await me();
+  if (!user) return;
+  const { items } = await Cal().filter({ created_by_id: user.id, letter }, { limit: 1 });
+  if (!vectors) { if (items[0]) await Cal().delete(items[0].id); return; }
+  const samples = vectors.map((v) => v.map((n) => Math.round(n * 1000) / 1000));
+  if (items[0]) await Cal().update(items[0].id, { samples });
+  else await Cal().create({ letter, samples });
+}
+
+// Loads the account's recordings (account wins), uploads any local-only letters.
+export async function syncCalibration() {
+  const user = await me();
+  if (!user) return false;
+  const { items } = await Cal().filter({ created_by_id: user.id }, { limit: 100 });
+  const local = loadSamples();
+  const merged = { ...local };
+  items.forEach((r) => { merged[r.letter] = r.samples; });
+  save(merged);
+  const remote = new Set(items.map((r) => r.letter));
+  await Promise.all(Object.keys(local).filter((l) => !remote.has(l)).map((l) => pushLetter(l, local[l])));
+  window.dispatchEvent(new Event("calibration-synced"));
+  return true;
+}
+
 export function addSamples(letter, vectors) {
   const s = { ...loadSamples() };
   s[letter] = [...(s[letter] || []), ...vectors].slice(-60);
   save(s);
+  pushLetter(letter, s[letter]);
 }
-export function clearLetter(letter) { const s = { ...loadSamples() }; delete s[letter]; save(s); }
-export function clearAll() { save({}); }
+export function clearLetter(letter) { const s = { ...loadSamples() }; delete s[letter]; save(s); pushLetter(letter, null); }
+export function clearAll() {
+  const letters = Object.keys(loadSamples());
+  save({});
+  letters.forEach((l) => pushLetter(l, null));
+}
 export const hasCalibration = () => Object.keys(loadSamples()).length > 0;
 
 // Returns { letter, distance } for the best match, or null.

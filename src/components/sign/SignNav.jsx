@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { syncCalibration } from "@/lib/af/calibration";
 import { Link, useLocation } from "react-router-dom";
 
 const LINKS = [
@@ -11,6 +12,7 @@ const LINKS = [
 
 export default function SignNav() {
   const { pathname } = useLocation();
+  useEffect(() => { syncCalibration(); }, []);
   return (
     <header className="max-w-5xl mx-auto px-5 pt-6 flex flex-wrap items-center justify-between gap-3">
       <span className="font-semibold text-neutral-900 tracking-tight">Sign Language Tutor · ASL</span>
