@@ -14,6 +14,8 @@ import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import AdaptiveFit from '@/pages/AdaptiveFit';
 import SignLearn from '@/pages/SignLearn';
+import SignTranslate from '@/pages/SignTranslate';
+import SignDrill from '@/pages/SignDrill';
 import ModelSandbox from '@/pages/ModelSandbox';
 import AgentLab from '@/pages/AgentLab';
 import Whitepaper from '@/pages/Whitepaper';
@@ -48,6 +50,8 @@ const AuthenticatedApp = () => {
     <Routes>
       {/* Add your page Route elements here */}
       <Route path="/" element={<SignLearn />} />
+      <Route path="/signs/translate" element={<SignTranslate />} />
+      <Route path="/signs/drill" element={<SignDrill />} />
       <Route path="/exercise" element={<AdaptiveFit />} />
       <Route path="/sandbox" element={<ModelSandbox />} />
       <Route path="/agent-lab" element={<AgentLab />} />

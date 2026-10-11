@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Link } from "react-router-dom";
+import SignNav from "@/components/sign/SignNav";
 import CameraStage from "@/components/af/CameraStage";
 import SignFeedback from "@/components/sign/SignFeedback";
 import { useSignCoach } from "@/hooks/useSignCoach";
@@ -27,10 +27,7 @@ export default function SignLearn() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white">
-      <header className="max-w-5xl mx-auto px-5 pt-6 flex items-center justify-between">
-        <span className="font-semibold text-neutral-900 tracking-tight">Sign Language Tutor · ASL</span>
-        <Link to="/exercise" className="text-sm text-neutral-500 hover:text-neutral-900">Exercise coach →</Link>
-      </header>
+      <SignNav />
       {!started ? (
         <div className="max-w-xl mx-auto px-5 py-20 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-neutral-900">Learn the ASL alphabet</h1>
