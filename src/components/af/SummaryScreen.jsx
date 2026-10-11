@@ -1,7 +1,8 @@
 import React from "react";
 import { Sparkles, Target, RotateCcw } from "lucide-react";
+import GoalProgress from "@/components/af/GoalProgress";
 
-export default function SummaryScreen({ summary, highlight, focusNext, stats, onRestart, saving }) {
+export default function SummaryScreen({ summary, highlight, focusNext, stats, onRestart, saving, goal, goalProgress }) {
   return (
     <div className="max-w-2xl mx-auto px-5 py-12">
       <div className="flex items-center gap-2 text-sky-600 mb-3">
@@ -12,8 +13,9 @@ export default function SummaryScreen({ summary, highlight, focusNext, stats, on
         {saving ? "Summarizing your session…" : "Here's how you moved today."}
       </h1>
 
-      <div className="grid grid-cols-3 gap-3 mt-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
         <Stat label="Reps" value={stats?.reps ?? 0} />
+        <Stat label="Exercises" value={stats?.exerciseCount ?? 0} />
         <Stat label="Corrections" value={stats?.corrections ?? 0} />
         <Stat label="Seconds" value={stats?.duration ?? 0} />
       </div>
@@ -27,6 +29,18 @@ export default function SummaryScreen({ summary, highlight, focusNext, stats, on
           <p className="text-neutral-700 leading-relaxed">{focusNext || "Keep showing up."}</p>
         </Card>
       </div>
+
+      {goal && (
+        <div className="mt-6">
+          <h3 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">Goal Progress</h3>
+          <GoalProgress
+            todayReps={goalProgress?.todayReps || 0}
+            weekReps={goalProgress?.weekReps || 0}
+            dailyTarget={goal.daily_reps_target}
+            weeklyTarget={goal.weekly_reps_target}
+          />
+        </div>
+      )}
 
       <button
         onClick={onRestart}
@@ -42,7 +56,7 @@ export default function SummaryScreen({ summary, highlight, focusNext, stats, on
 function Stat({ label, value }) {
   return (
     <div className="rounded-2xl bg-white ring-1 ring-black/5 shadow-sm p-4 text-center">
-      <div className="text-3xl font-bold text-neutral-900 tabular-nums">{value}</div>
+      <div className="text-2xl sm:text-3xl font-bold text-neutral-900 tabular-nums">{value}</div>
       <div className="text-xs font-medium text-neutral-400 uppercase tracking-wide mt-1">{label}</div>
     </div>
   );

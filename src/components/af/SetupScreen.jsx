@@ -1,21 +1,69 @@
 import React from "react";
-import { Accessibility, Camera, ArrowRight, Mic, MicOff } from "lucide-react";
+import { Accessibility, Camera, ArrowRight, Mic, MicOff, CheckCircle2 } from "lucide-react";
+import GoalProgress from "@/components/af/GoalProgress";
+import { ROUTINES } from "@/lib/af/exercises";
 
-export default function SetupScreen({ onStart, voiceSupported }) {
+export default function SetupScreen({ onStart, voiceSupported, routine, onSelectRoutine, goal, goalProgress }) {
   return (
-    <div className="max-w-2xl mx-auto px-5 py-10">
+    <div className="max-w-3xl mx-auto px-5 py-10">
       <div className="flex items-center gap-2 text-emerald-600 mb-3">
         <Accessibility className="w-5 h-5" />
         <span className="text-sm font-semibold tracking-wide uppercase">AdaptiveFit</span>
       </div>
-      <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-neutral-900 leading-tight">
-        A seated exercise coach that <span className="text-emerald-600">sees your hand</span> and <span className="text-sky-600">talks back</span>.
+      <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900 leading-tight">
+        Choose your routine and <span className="text-emerald-600">start moving</span>.
       </h1>
-      <p className="mt-4 text-neutral-600 text-lg leading-relaxed">
-        Today's exercise: <strong className="text-neutral-900">Finger Spreads</strong>. Hold your hand in front of
-        the camera, open it wide, then make a fist. Your coach tracks each finger, counts your reps, and talks with
-        you out loud. Just speak — ask if your form is right, how many you've done, or say "I'm done" when you're finished.
+      <p className="mt-3 text-neutral-600 text-base leading-relaxed">
+        Pick a hand exercise routine below. Your coach tracks your fingers, counts reps, and talks with you out loud.
       </p>
+
+      {goal && (
+        <div className="mt-6">
+          <GoalProgress
+            todayReps={goalProgress.todayReps}
+            weekReps={goalProgress.weekReps}
+            dailyTarget={goal.daily_reps_target}
+            weeklyTarget={goal.weekly_reps_target}
+          />
+        </div>
+      )}
+
+      <div className="mt-8">
+        <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">Routines</h2>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {ROUTINES.map(r => (
+            <button
+              key={r.id}
+              onClick={() => onSelectRoutine(r)}
+              className={`text-left rounded-2xl p-4 ring-1 transition-all ${
+                routine?.id === r.id
+                  ? "bg-neutral-900 text-white ring-neutral-900"
+                  : "bg-white text-neutral-900 ring-black/5 hover:ring-neutral-300"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-semibold">{r.name}</h3>
+                {routine?.id === r.id && <CheckCircle2 className="w-5 h-5" />}
+              </div>
+              <p className={`text-sm ${routine?.id === r.id ? "text-white/70" : "text-neutral-500"}`}>
+                {r.description}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {r.exercises.map((ex, i) => (
+                  <span
+                    key={i}
+                    className={`text-xs rounded-full px-2 py-0.5 ${
+                      routine?.id === r.id ? "bg-white/15 text-white/80" : "bg-neutral-100 text-neutral-500"
+                    }`}
+                  >
+                    {ex.name} · {ex.side}
+                  </span>
+                ))}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className={`mt-6 rounded-2xl p-4 ring-1 flex items-start gap-3 ${voiceSupported ? "bg-sky-50 ring-sky-100" : "bg-amber-50 ring-amber-100"}`}>
         {voiceSupported ? <Mic className="w-5 h-5 text-sky-600 mt-0.5 shrink-0" /> : <MicOff className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />}
@@ -33,10 +81,11 @@ export default function SetupScreen({ onStart, voiceSupported }) {
 
       <button
         onClick={onStart}
-        className="mt-8 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-900 text-white px-7 py-4 text-base font-semibold hover:bg-neutral-800 transition-colors"
+        disabled={!routine}
+        className="mt-8 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-900 text-white px-7 py-4 text-base font-semibold hover:bg-neutral-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <Camera className="w-5 h-5" />
-        Start Finger Spreads
+        {routine ? `Start ${routine.name}` : "Select a routine"}
         <ArrowRight className="w-5 h-5" />
       </button>
     </div>

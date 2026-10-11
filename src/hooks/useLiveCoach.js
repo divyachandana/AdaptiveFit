@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { handConfidence, analyzeFingerSpread, updateRepState, summarizeHand } from "@/lib/af/handUtils";
+import { combinedConfidence, combinedAnalysis, updateRepState, summarizeHands } from "@/lib/af/handUtils";
 import { speak, stopSpeaking } from "@/lib/af/speech";
 import { EXERCISE_LIBRARY } from "@/lib/af/exercises";
 
@@ -10,6 +10,8 @@ import { EXERCISE_LIBRARY } from "@/lib/af/exercises";
 // persists, the loop routes the hand summary to the adaptiveCoach backend
 // function (the LLM reasoning model) for a warmer, specific correction and
 // tells the UI which finger to highlight.
+// Supports left, right, or both hands — handlePose receives an array of
+// detected hands and uses combinedAnalysis to average metrics.
 export function useLiveCoach({ exerciseRef, onRepComplete }) {
   const repStateRef = useRef({ count: 0, phase: "open" });
   const lastLocalCueRef = useRef(0);
@@ -22,7 +24,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
   const onRepCompleteRef = useRef(onRepComplete);
   useEffect(() => { onRepCompleteRef.current = onRepComplete; }, [onRepComplete]);
   const [repCount, setRepCount] = useState(0);
-  const [correction, setCorrection] = useState(null); // {message, part, source}
+  const [correction, setCorrection] = useState(null);
   const [confidence, setConfidence] = useState(0);
 
   const reset = useCallback(() => {
@@ -38,16 +40,29 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
     setConfidence(0);
   }, []);
 
-  const handlePose = useCallback((landmarks) => {
-    if (!landmarks) { setConfidence(0); return; }
+  const handlePose = useCallback((hands) => {
+    if (!hands || !hands.length) { setConfidence(0); return; }
     const ex = exerciseRef.current;
     if (!ex) return;
     const lib = EXERCISE_LIBRARY[ex.name];
     if (!lib || lib.type !== "pose") { setConfidence(0); return; }
 
-    const conf = handConfidence(landmarks);
+    const conf = combinedConfidence(hands);
     setConfidence(conf);
-    const analysis = analyzeFingerSpread(landmarks);
+
+    // For "both hands" exercises, both hands must be visible to count reps.
+    if (ex.side === "both" && hands.length < 2) {
+      setConfidence(conf * 0.5);
+      const now = Date.now();
+      if (now - lastLocalCueRef.current > 4000) {
+        lastLocalCueRef.current = now;
+        speak("Show both hands to the camera", { interrupt: false, minGapMs: 0, force: true });
+        setCorrection({ message: "Show both hands to the camera", part: "hand", source: "vision" });
+      }
+      return;
+    }
+
+    const analysis = combinedAnalysis(hands);
 
     // --- rep counting (fast path) ---
     const prevCount = repStateRef.current.count;
@@ -58,7 +73,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
       if (next.rep) {
         lastRepAtRef.current = Date.now();
         const n = next.count;
-        const cue = n % 5 === 0 ? `Nice! ${n} reps` : `${n}`;
+        const cue = `${n}`;
         speak(cue, { interrupt: false, minGapMs: 400, force: true });
         onRepCompleteRef.current?.(n);
       }
@@ -69,22 +84,20 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
     if (flags.length > 0 && conf > 0.4) {
       const top = flags[0];
       devRef.current = { text: top.text, part: mapPart(top), kind: top.kind };
-      // Local fast-path spoken cue (low latency), throttled.
       const now = Date.now();
       if (now - lastLocalCueRef.current > 3500) {
         lastLocalCueRef.current = now;
         speak(top.text, { interrupt: false, minGapMs: 0, force: true });
         setCorrection({ message: top.text, part: mapPart(top), source: "vision" });
       }
-      // Reasoning path: route to LLM if deviation persists and not too soon.
       if (now - lastLLMAtRef.current > 6000 && !inflightRef.current) {
-        routeToReasoning(ex, top, landmarks);
+        routeToReasoning(ex, top, hands);
       }
     } else {
       devRef.current = null;
     }
 
-    // --- inactivity cue: coach the user if they haven't moved in a while ---
+    // --- inactivity cue ---
     if (conf > 0.4) {
       const now = Date.now();
       if (now - lastRepAtRef.current > 10000 && now - lastInactivityRef.current > 15000) {
@@ -92,14 +105,14 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
         lastLocalCueRef.current = now;
         const cue = repStateRef.current.phase === "open"
           ? "Now make a gentle fist"
-          : "Open your hand as wide as you can";
+          : "Open your hand wide";
         speak(cue, { interrupt: false, minGapMs: 0, force: true });
         setCorrection({ message: cue, part: "hand", source: "vision" });
       }
     }
   }, [exerciseRef]);
 
-  const routeToReasoning = useCallback(async (ex, flag, landmarks) => {
+  const routeToReasoning = useCallback(async (ex, flag, hands) => {
     inflightRef.current = true;
     lastLLMAtRef.current = Date.now();
     try {
@@ -108,7 +121,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
         task: "correct",
         exercise: ex.name,
         deviation: `${flag.kind}: ${flag.text}`,
-        poseSummary: summarizeHand(landmarks),
+        poseSummary: summarizeHands(hands),
         recentCorrections: recent
       });
       const data = res?.data || res;

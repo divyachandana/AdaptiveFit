@@ -10,17 +10,17 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 
 const PLANS = {
   upper_body: [
-    { name: "Arm Raises", side: "both", targetReps: 10, focus: "Lift your wrists up to shoulder height, then higher if you can.", cue: "Raise your arms out to the sides" },
-    { name: "Overhead Press", side: "both", targetReps: 8, focus: "Press your hands up toward the ceiling.", cue: "Press your hands overhead" },
-    { name: "Bicep Curls", side: "both", targetReps: 12, focus: "Curl your fists toward your shoulders.", cue: "Curl your arms up" }
+    { name: "Arm Raises", side: "both", targetReps: 3, focus: "Lift your wrists up to shoulder height, then higher if you can.", cue: "Raise your arms out to the sides" },
+    { name: "Overhead Press", side: "both", targetReps: 3, focus: "Press your hands up toward the ceiling.", cue: "Press your hands overhead" },
+    { name: "Bicep Curls", side: "both", targetReps: 3, focus: "Curl your fists toward your shoulders.", cue: "Curl your arms up" }
   ],
   neck: [
-    { name: "Neck Tilts", side: "both", targetReps: 8, focus: "Tilt your ear toward your shoulder, keep shoulders down.", cue: "Tilt your head to the side" },
-    { name: "Neck Turns", side: "both", targetReps: 8, focus: "Turn your chin toward each shoulder slowly.", cue: "Turn your head slowly" }
+    { name: "Neck Tilts", side: "both", targetReps: 3, focus: "Tilt your ear toward your shoulder, keep shoulders down.", cue: "Tilt your head to the side" },
+    { name: "Neck Turns", side: "both", targetReps: 3, focus: "Turn your chin toward each shoulder slowly.", cue: "Turn your head slowly" }
   ],
   hands: [
-    { name: "Wrist Rotations", side: "both", targetReps: 10, focus: "Make gentle circles with your wrists.", cue: "Circle your wrists" },
-    { name: "Hand Open-Close", side: "both", targetReps: 12, focus: "Spread your fingers wide, then make a fist.", cue: "Open and close your hands" }
+    { name: "Hand Open-Close", side: "both", targetReps: 3, focus: "Open your fingers, then make a comfortable fist.", cue: "Open and close your hands" },
+    { name: "Finger Spreads", side: "both", targetReps: 3, focus: "Spread your fingers apart, then bring them together.", cue: "Spread your fingers" }
   ]
 };
 
@@ -78,7 +78,7 @@ export default async function (req) {
       const merged = (data.exercises || plan).map((e, i) => ({
         name: e.name || plan[i]?.name || "Exercise",
         side: e.side || plan[i]?.side || "both",
-        targetReps: Math.min(Math.max(Number(e.targetReps) || plan[i]?.targetReps || 8, 4), 20),
+        targetReps: Math.min(Math.max(Number(e.targetReps) || plan[i]?.targetReps || 3, 3), 10),
         cue: e.cue || plan[i]?.cue || "",
         focus: e.focus || plan[i]?.focus || ""
       }));
