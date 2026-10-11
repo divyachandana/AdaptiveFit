@@ -149,6 +149,29 @@ export default async function (req) {
       });
     }
 
+    if (task === "converse") {
+      const transcript = body.transcript || "";
+      const exercise = body.exercise || "Arm Raises";
+      const repCount = Number(body.repCount) || 0;
+      const targetReps = Number(body.targetReps) || 10;
+      const recent = Array.isArray(body.recentCorrections) ? body.recentCorrections.slice(-3).join(" | ") : "";
+      const prompt = `You are a seated-exercise coach for a wheelchair user, talking with them LIVE during ${exercise}. They just said: "${transcript}". Current reps: ${repCount}/${targetReps}. Recent things you said: ${recent || "none"}. Respond conversationally in ONE short sentence (under 16 words). Be warm, specific, and encouraging. If they clearly want to stop or be done, set should_finish true. If they ask about form, reps, or anything else, answer helpfully. No jargon. No em-dashes.`;
+      const schema = {
+        type: "object",
+        properties: {
+          response: { type: "string" },
+          should_finish: { type: "boolean" }
+        },
+        required: ["response", "should_finish"]
+      };
+      const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, response_json_schema: schema });
+      const data = res.data || res;
+      return Response.json({
+        response: data.response || "Keep going, you're doing great.",
+        should_finish: !!data.should_finish
+      });
+    }
+
     return Response.json({ error: "Unknown task" }, { status: 400 });
   } catch (error) {
     return Response.json({ error: error.message || "coach error" }, { status: 500 });

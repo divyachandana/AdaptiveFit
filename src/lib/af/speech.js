@@ -7,6 +7,34 @@ let voicesCache = [];
 let lastSpoken = 0;
 let lastText = "";
 
+// Speech event system: lets the voice-conversation layer pause recognition
+// while the coach speaks (so it doesn't transcribe its own voice) and resume
+// when speech ends. Uses a debounce + counter to handle interrupt-cancelled
+// utterances (a new speak() right after cancel shouldn't fire a premature "end").
+const listeners = new Set();
+let activeCount = 0;
+let endTimer = null;
+
+function notifyStart() {
+  if (endTimer) { clearTimeout(endTimer); endTimer = null; }
+  activeCount++;
+  if (activeCount === 1) listeners.forEach(f => f("start"));
+}
+
+function notifyEndSoon() {
+  if (endTimer) clearTimeout(endTimer);
+  endTimer = setTimeout(() => {
+    activeCount = 0;
+    endTimer = null;
+    listeners.forEach(f => f("end"));
+  }, 150);
+}
+
+export function onSpeechEvent(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
 function pickVoice() {
   if (voicesCache.length === 0) voicesCache = window.speechSynthesis?.getVoices() || [];
   // Prefer a natural-sounding English voice if available.
@@ -41,9 +69,14 @@ export function speak(text, opts = {}) {
   u.rate = opts.rate != null ? opts.rate : 1;
   u.pitch = opts.pitch != null ? opts.pitch : 1.05;
   u.volume = 1;
+  notifyStart();
+  u.onend = () => notifyEndSoon();
   window.speechSynthesis.speak(u);
 }
 
 export function stopSpeaking() {
   if (speechSupported()) window.speechSynthesis.cancel();
+  if (endTimer) { clearTimeout(endTimer); endTimer = null; }
+  activeCount = 0;
+  listeners.forEach(f => f("end"));
 }

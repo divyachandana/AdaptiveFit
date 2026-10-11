@@ -1,8 +1,7 @@
 import React from "react";
-import { BODY_PARTS } from "@/lib/af/exercises";
-import { Accessibility, Camera, ArrowRight } from "lucide-react";
+import { Accessibility, Camera, ArrowRight, Mic, MicOff } from "lucide-react";
 
-export default function SetupScreen({ selected, onToggle, onStart, loading }) {
+export default function SetupScreen({ onStart, voiceSupported }) {
   return (
     <div className="max-w-2xl mx-auto px-5 py-10">
       <div className="flex items-center gap-2 text-emerald-600 mb-3">
@@ -13,57 +12,33 @@ export default function SetupScreen({ selected, onToggle, onStart, loading }) {
         A seated exercise coach that <span className="text-emerald-600">sees you</span> and <span className="text-sky-600">talks back</span>.
       </h1>
       <p className="mt-4 text-neutral-600 text-lg leading-relaxed">
-        Built for wheelchair users. Your camera watches your upper body, an AI reasons about your
-        seated pose, and the coach speaks corrections out loud — adapting to whatever you can move today.
+        Today's exercise: <strong className="text-neutral-900">Arm Raises</strong>. Your camera tracks your
+        upper body while your coach watches your form, counts your reps, and talks with you out loud.
+        Just speak. Ask if your form is right, how many you've done, or say "I'm done" when you're finished.
       </p>
 
-      <div className="mt-8">
-        <p className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">
-          What can you move today?
-        </p>
-        <div className="grid sm:grid-cols-3 gap-3">
-          {BODY_PARTS.map((p) => {
-            const on = selected.includes(p.id);
-            return (
-              <button
-                key={p.id}
-                onClick={() => onToggle(p.id)}
-                className={`text-left rounded-2xl p-4 border-2 transition-all duration-200 ${
-                  on ? "border-emerald-500 bg-emerald-50 shadow-sm" : "border-neutral-200 bg-white hover:border-neutral-300"
-                }`}
-              >
-                <div className="text-3xl mb-2">{p.emoji}</div>
-                <div className="font-semibold text-neutral-900">{p.label}</div>
-                <div className={`mt-1 text-xs font-medium ${on ? "text-emerald-600" : "text-neutral-400"}`}>
-                  {on ? "Selected" : "Tap to include"}
-                </div>
-              </button>
-            );
-          })}
+      <div className={`mt-6 rounded-2xl p-4 ring-1 flex items-start gap-3 ${voiceSupported ? "bg-sky-50 ring-sky-100" : "bg-amber-50 ring-amber-100"}`}>
+        {voiceSupported ? <Mic className="w-5 h-5 text-sky-600 mt-0.5 shrink-0" /> : <MicOff className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />}
+        <div className="text-sm">
+          <p className={`font-semibold ${voiceSupported ? "text-sky-900" : "text-amber-900"}`}>
+            {voiceSupported ? "Voice conversation ready" : "Voice not available in this browser"}
+          </p>
+          {voiceSupported ? (
+            <p className="text-sky-700 mt-1">We'll ask for microphone permission when you start. Then it's hands-free — just talk to your coach.</p>
+          ) : (
+            <p className="text-amber-700 mt-1">Try Chrome or Edge for two-way voice. The camera and on-screen coaching still work.</p>
+          )}
         </div>
       </div>
 
       <button
         onClick={onStart}
-        disabled={selected.length === 0 || loading}
-        className="mt-8 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-900 text-white px-7 py-4 text-base font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-800 transition-colors"
+        className="mt-8 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-900 text-white px-7 py-4 text-base font-semibold hover:bg-neutral-800 transition-colors"
       >
-        {loading ? (
-          <>
-            <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-            Building your plan…
-          </>
-        ) : (
-          <>
-            <Camera className="w-5 h-5" />
-            Start my session
-            <ArrowRight className="w-5 h-5" />
-          </>
-        )}
+        <Camera className="w-5 h-5" />
+        Start Arm Raises
+        <ArrowRight className="w-5 h-5" />
       </button>
-      {selected.length === 0 && (
-        <p className="mt-3 text-sm text-neutral-400">Select at least one body part to begin.</p>
-      )}
     </div>
   );
 }
