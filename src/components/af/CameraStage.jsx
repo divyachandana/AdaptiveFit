@@ -54,7 +54,7 @@ const CameraStage = forwardRef(function CameraStage({ onPose, highlight, active,
 
         const Hands = await waitForHandGlobals();
         const hands = new Hands({
-          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`
         });
         hands.setOptions({
           maxNumHands: 1,
