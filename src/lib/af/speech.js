@@ -21,6 +21,11 @@ function remember(text) {
 export function isCoachEcho(text) {
   const w = words(text);
   if (w.length === 0) return true;
+  // Short answers (1-2 words) often reuse a word the coach just said
+  // (e.g. "hands", "left", "both"). Treat them as real input, not echo —
+  // the coach's own voice picked up by the mic is usually a full sentence,
+  // so a 70% match on one or two words is almost always a false positive.
+  if (w.length <= 2) return false;
   const cutoff = Date.now() - 12000;
   return recentSpoken.some(r => {
     if (r.at < cutoff) return false;
