@@ -184,6 +184,32 @@ export const MODEL_REGISTRY = [
   { id: 'pose-landmarker', name: 'Pose Landmarker Lite', type: 'full-body', landmarks: 33, load: loadPoseLandmarker },
 ];
 
+// ─── Model cache — avoids redundant CDN loads when switching between
+// models during benchmarking or when the router falls back. ───
+const modelCache = new Map();
+
+export async function loadModel(id) {
+  if (modelCache.has(id)) return modelCache.get(id);
+  const entry = MODEL_REGISTRY.find(m => m.id === id);
+  if (!entry) return err(new Error(`Unknown model: ${id}`));
+  const result = await entry.load();
+  if (result.ok) modelCache.set(id, result);
+  return result;
+}
+
+export function clearModelCache() {
+  for (const model of modelCache.values()) {
+    if (model && typeof model.close === 'function') {
+      try { model.close(); } catch (_) {}
+    }
+  }
+  modelCache.clear();
+}
+
+export function isModelCached(id) {
+  return modelCache.has(id);
+}
+
 function waitForGlobal(name, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
     const start = Date.now();
