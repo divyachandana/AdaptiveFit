@@ -1,0 +1,54 @@
+{
+  "name": "Goal",
+  "type": "object",
+  "properties": {
+    "daily_reps_target": {
+      "type": "number",
+      "default": 15,
+      "description": "Target reps per day"
+    },
+    "weekly_reps_target": {
+      "type": "number",
+      "default": 60,
+      "description": "Target reps per week"
+    }
+  },
+  "required": [
+    "daily_reps_target",
+    "weekly_reps_target"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

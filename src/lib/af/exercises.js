@@ -62,6 +62,24 @@ export const EXERCISE_LIBRARY = {
     cue: "Make gentle circles with your wrists",
     focus: "Circle your wrists slowly and smoothly.",
     detect: null
+  },
+  "Finger Bends": {
+    id: "finger_bends",
+    type: "pose",
+    side: "both",
+    defaultReps: 8,
+    cue: "Start with fingers straight, then gently curl them into a hook, then a comfortable fist",
+    focus: "Keep your knuckles straight for the hook, then make a gentle full fist without squeezing hard.",
+    detect: "fingerSpread"
+  },
+  "Thumb Lifts": {
+    id: "thumb_lifts",
+    type: "rhythm",
+    side: "both",
+    defaultReps: 8,
+    cue: "Lift your thumb up toward the ceiling, then bring it down to touch your palm",
+    focus: "Lift your thumb slowly, then bring it across to touch the base of your little finger.",
+    detect: null
   }
 };
 
@@ -71,7 +89,7 @@ export function defaultPlanForParts(parts) {
   const map = {
     upper_body: ["Arm Raises", "Overhead Press"],
     neck: ["Neck Tilts", "Neck Turns"],
-    hands: ["Finger Spreads", "Wrist Rotations"]
+    hands: ["Finger Spreads", "Finger Bends", "Thumb Lifts", "Wrist Rotations"]
   };
   const seen = new Set();
   const out = [];
