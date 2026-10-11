@@ -3,11 +3,11 @@ import { Volume2, Delete, Space, Trash2 } from "lucide-react";
 import CameraStage from "@/components/af/CameraStage";
 import SignNav from "@/components/sign/SignNav";
 import { useSignTranslator } from "@/hooks/useSignTranslator";
-import { TRANSLATABLE } from "@/lib/af/signClassifier";
+import WordSuggestions from "@/components/sign/WordSuggestions";
 import { primeVoices } from "@/lib/af/speech";
 
 export default function SignTranslate() {
-  const { handlePose, text, live, hold, actions } = useSignTranslator();
+  const { handlePose, text, words, currentWord, live, hold, actions } = useSignTranslator();
   useEffect(() => { primeVoices(); }, []);
   const btn = "h-14 rounded-2xl font-semibold flex items-center justify-center gap-2";
 
@@ -27,13 +27,14 @@ export default function SignTranslate() {
           <div className="min-h-32 rounded-2xl border-2 border-neutral-900 bg-white p-5 text-3xl font-semibold tracking-wide break-words">
             {text || <span className="text-neutral-400 text-lg font-normal">Hold a sign for one second to type it. Drop your hand to finish a word and hear it spoken.</span>}
           </div>
+          <WordSuggestions prefix={currentWord} words={words} onPick={actions.complete} />
           <div className="grid grid-cols-2 gap-2">
             <button onClick={actions.speakAll} className={`${btn} bg-neutral-900 text-white`}><Volume2 className="w-5 h-5" />Speak</button>
             <button onClick={actions.space} className={`${btn} bg-neutral-100`}><Space className="w-5 h-5" />Space</button>
             <button onClick={actions.backspace} className={`${btn} bg-neutral-100`}><Delete className="w-5 h-5" />Delete</button>
             <button onClick={actions.clear} className={`${btn} bg-neutral-100`}><Trash2 className="w-5 h-5" />Clear</button>
           </div>
-          <p className="text-xs text-neutral-500">Recognizes: {TRANSLATABLE.join(", ")}</p>
+          <p className="text-xs text-neutral-500">Recognizes all 26 letters. Trace J with your pinky and Z with your index finger.</p>
         </div>
       </div>
     </div>
