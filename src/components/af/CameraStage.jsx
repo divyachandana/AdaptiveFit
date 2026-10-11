@@ -115,8 +115,12 @@ const CameraStage = forwardRef(function CameraStage({ onPose, highlight, active,
     const mx = (x) => w - x; // mirror because video is mirrored on display
     for (const hand of hands) {
       const landmarks = hand.landmarks;
+      const isLeft = hand.handedness === "Left";
+      // Left hand = sky blue, right hand = emerald green
+      const lineColor = isLeft ? "rgba(56,189,248,0.9)" : "rgba(52,211,153,0.9)";
+      const dotColor = isLeft ? "rgba(125,211,252,0.95)" : "rgba(110,231,183,0.95)";
       ctx.lineWidth = 4;
-      ctx.strokeStyle = "rgba(96,165,250,0.9)";
+      ctx.strokeStyle = lineColor;
       for (const [a, b] of HAND_CONNECTIONS) {
         const pa = landmarks[a], pb = landmarks[b];
         if (pa && pb) {
@@ -133,7 +137,7 @@ const CameraStage = forwardRef(function CameraStage({ onPose, highlight, active,
         const isHL = i === hlIdx;
         ctx.beginPath();
         ctx.arc(mx(p.x), p.y, isHL ? 9 : 5, 0, Math.PI * 2);
-        ctx.fillStyle = isHL ? "#fbbf24" : "rgba(255,255,255,0.95)";
+        ctx.fillStyle = isHL ? "#fbbf24" : dotColor;
         ctx.fill();
         if (isHL) {
           ctx.beginPath();
@@ -165,10 +169,16 @@ const CameraStage = forwardRef(function CameraStage({ onPose, highlight, active,
         </div>
       )}
       {status === "ready" && (
-        <div className="absolute top-3 left-3 flex items-center gap-2">
-          <span className="rounded-lg bg-black/50 text-white/90 text-xs px-2.5 py-1.5 pointer-events-none">
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
+          <span className="rounded-lg bg-black/50 text-white/90 text-xs px-2.5 py-1.5">
             {briefing ? "Listen to the instructions…" : sideLabel}
           </span>
+          {side === "both" && (
+            <div className="flex items-center gap-3 rounded-lg bg-black/50 text-white/90 text-xs px-2.5 py-1.5">
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-sky-400" />Left</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />Right</span>
+            </div>
+          )}
         </div>
       )}
       {repCount != null && (
