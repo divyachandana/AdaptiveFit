@@ -1,7 +1,12 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -45,8 +50,14 @@ const AuthenticatedApp = () => {
       <Route path="/sandbox" element={<ModelSandbox />} />
       <Route path="/agent-lab" element={<AgentLab />} />
       <Route path="/whitepaper" element={<Whitepaper />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/therapist" element={<TherapistPortal />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/therapist" element={<TherapistPortal />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

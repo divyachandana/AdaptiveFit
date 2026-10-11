@@ -132,7 +132,7 @@ export default async function (req) {
       // Persist the session record to the signed-in user's history.
       try {
         const user = await base44.auth.me().catch(() => null);
-        await base44.asServiceRole.entities.SessionRecord.create({
+        if (user) await base44.asServiceRole.entities.SessionRecord.create({
           user_id: user?.id || "",
           user_email: user?.email || "",
           body_parts: body.bodyParts || [],

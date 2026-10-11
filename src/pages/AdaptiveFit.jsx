@@ -19,6 +19,7 @@ export default function AdaptiveFit() {
   const [briefing, setBriefing] = useState(false);
   const [goal, setGoal] = useState(null);
   const [goalProgress, setGoalProgress] = useState({ todayReps: 0, weekReps: 0 });
+  const [isGuest, setIsGuest] = useState(false);
 
   const exerciseRef = useRef(null);
   const cameraRef = useRef(null);
@@ -51,6 +52,7 @@ export default function AdaptiveFit() {
   // Load goals and progress from the database
   const loadGoalsAndProgress = useCallback(async () => {
     try {
+      if (!(await base44.auth.isAuthenticated())) { setIsGuest(true); return; }
       const me = await base44.auth.me();
       let result = await base44.entities.Goal.filter({ created_by_id: me.id }, { limit: 1 });
       if (!result.items?.length) {
@@ -285,10 +287,12 @@ export default function AdaptiveFit() {
           <div className="w-9 h-9 rounded-xl bg-neutral-900 text-white grid place-items-center font-bold">A</div>
           <span className="font-semibold text-neutral-900 tracking-tight">AdaptiveFit</span>
         </div>
-        <div className="flex gap-2">
+        {isGuest ? (
+          <Link to="/login" className="h-11 px-4 inline-flex items-center rounded-xl bg-neutral-900 text-white text-sm font-semibold">Sign in to save progress</Link>
+        ) : <div className="flex gap-2">
           <Link to="/therapist" className="h-11 px-4 inline-flex items-center rounded-xl border-2 border-neutral-900 text-sm font-semibold">Therapist portal</Link>
           <Link to="/dashboard" className="h-11 px-4 inline-flex items-center rounded-xl bg-neutral-900 text-white text-sm font-semibold">Progress dashboard</Link>
-        </div>
+        </div>}
       </header>
 
       {phase === "setup" && (
