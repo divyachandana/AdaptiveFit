@@ -214,21 +214,27 @@ export default async function (req) {
     if (task === "buildExercise") {
       const messages = Array.isArray(body.messages) ? body.messages.slice(-20) : [];
       const convo = messages.map(m => `${m.role === "user" ? "User" : "Coach"}: ${m.content}`).join("\n");
-      const prompt = `You are an adaptive seated-exercise coach for a person with limited mobility. You are helping them DESIGN a custom hand or upper-body exercise through voice conversation.
+      const prompt = `You are an adaptive seated-exercise coach for a person with limited mobility, helping them DESIGN one custom hand or upper-body exercise through voice conversation.
 
-Ask one short clarifying question at a time: which body part, which hand (left, right, or both), what movement, and how many reps (keep it small, around 3). Once you have enough detail, produce the exercise.
+You need exactly four things, in this order: (1) body part, (2) which hand — left, right, or both, (3) the movement, (4) rep count (keep it small, around 3).
 
-The app counts reps using one of these tracking modes:
-- "fingerSpread": opening/closing the hand, spreading fingers, making fists, curling fingers (anything based on hand openness)
+Rules:
+- Ask EXACTLY ONE question per turn. Never ask two things at once.
+- Read the conversation above before speaking. NEVER repeat a question the user already answered. If an answer is already there, move to the next missing detail.
+- When all four are known, STOP asking and produce the exercise that turn. Set ready=true.
+- Be concise and direct. One short warm sentence, no jargon, no em-dashes, no filler, no restating what the user said.
+
+The app counts reps in one of these modes — pick the matching one for the movement:
+- "fingerSpread": opening/closing the hand, spreading fingers, making fists, curling fingers
 - "thumbTouch": touching the thumb to each fingertip in turn
-- "none": a timed hold or movement the camera cannot count (wrist rotations, holds, neck moves) where reps are time-counted
+- "none": a timed hold or movement the camera cannot count (wrist rotations, holds, neck moves)
 
-Existing examples: "Hand Open-Close" (fingerSpread, both), "Full Fist" (fingerSpread, both), "Thumb-to-Fingertip Touch" (thumbTouch, both), "Wrist Rotations" (none, both).
+Examples: "Hand Open-Close" (fingerSpread, both), "Full Fist" (fingerSpread, both), "Thumb-to-Fingertip Touch" (thumbTouch, both), "Wrist Rotations" (none, both).
 
 Conversation so far:
 ${convo || "(none yet)"}
 
-Reply with what to SAY to the user (one short warm sentence, no jargon, no em-dashes). Set ready=true ONLY when the exercise is fully defined, and include the exercise object with name, side (left/right/both), defaultReps (1-10), cue (short spoken prompt), focus (one-sentence how-to), and detect (fingerSpread/thumbTouch/none). Otherwise set ready=false and omit exercise.`;
+Reply with what to SAY to the user. Set ready=true ONLY when the exercise is fully defined, and include the exercise object with name, side (left/right/both), defaultReps (1-10), cue (short spoken prompt), focus (one-sentence how-to), and detect (fingerSpread/thumbTouch/none). Otherwise ready=false and omit exercise.`;
       const schema = {
         type: "object",
         properties: {

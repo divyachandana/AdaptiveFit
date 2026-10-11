@@ -11,14 +11,14 @@ const DETECT_LABEL = {
 export default function ExerciseBuilder({ voiceSupported, onClose, onBuilt }) {
   const {
     supported, listening, transcript, messages, coachResponse, thinking, exercise,
-    startConversation, stop, sendText, clearExercise
+    greet, startListening, stopListening, sendText, clearExercise
   } = useExerciseBuilder();
   const [text, setText] = useState("");
   const logRef = useRef(null);
 
   useEffect(() => {
-    if (voiceSupported && supported) startConversation();
-    return () => stop();
+    greet(); // coach opens the conversation (TTS is unlocked by the opening tap)
+    return () => stopListening();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -55,7 +55,7 @@ export default function ExerciseBuilder({ voiceSupported, onClose, onBuilt }) {
         <div ref={logRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-neutral-50">
           {messages.length === 0 && !thinking && (
             <p className="text-sm text-neutral-400 italic">
-              {voiceSupported && supported ? "Listening… tell the coach what you want to work on." : "Type what you want to work on below."}
+              {voiceSupported && supported ? "Tap the mic, then tell the coach what you want to work on — or type below." : "Type what you want to work on below."}
             </p>
           )}
           {messages.map((m, i) => (
@@ -122,11 +122,11 @@ export default function ExerciseBuilder({ voiceSupported, onClose, onBuilt }) {
             {voiceSupported && supported && (
               <button
                 type="button"
-                onClick={listening ? stop : startConversation}
+                onClick={listening ? stopListening : startListening}
                 className={`shrink-0 w-11 h-11 rounded-xl grid place-items-center transition-colors ${
                   listening ? "bg-red-500 text-white" : "bg-neutral-900 text-white"
                 }`}
-                title={listening ? "Stop listening" : "Start listening"}
+                title={listening ? "Stop listening" : "Tap to talk"}
               >
                 {listening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
               </button>

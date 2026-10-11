@@ -4,10 +4,10 @@ import { recognitionSupported, createRecognition } from "@/lib/af/voiceRecogniti
 import { speak, isCoachEcho, stopSpeaking } from "@/lib/af/speech";
 
 // useExerciseBuilder: a two-way voice loop for designing a custom exercise.
-// Listens continuously, transcribes the user, routes the conversation to the
-// adaptiveCoach "buildExercise" task (Claude), speaks the reply, and surfaces
-// the finished exercise when the model marks it ready. Falls back to a text
-// input when speech recognition is unavailable.
+// Routes the conversation to the adaptiveCoach "buildExercise" task (Claude),
+// speaks the reply, and surfaces the finished exercise when ready. The mic
+// is started by an explicit user tap (a gesture the browser requires) rather
+// than on mount, so recognition actually starts. Falls back to text input.
 
 export function useExerciseBuilder() {
   const supported = recognitionSupported();
@@ -61,8 +61,13 @@ export function useExerciseBuilder() {
 
   useEffect(() => { transcriptCbRef.current = handleTranscript; }, [handleTranscript]);
 
-  const startConversation = useCallback(() => {
-    if (!supported || recRef.current) return;
+  // Greet on open (TTS is unlocked by the click that opened the panel).
+  const greet = useCallback(() => { send([]); }, [send]);
+
+  // Start the mic from an explicit tap (browser requires a user gesture).
+  const startListening = useCallback(() => {
+    if (!supported) return;
+    if (recRef.current) { try { recRef.current.stop(); } catch (_) {} recRef.current = null; }
     const rec = createRecognition({
       onResult: (t, f) => transcriptCbRef.current?.(t, f),
       onError: () => {}
@@ -70,10 +75,9 @@ export function useExerciseBuilder() {
     recRef.current = rec;
     rec.start();
     setListening(true);
-    send([]); // opening line from the coach
-  }, [supported, send]);
+  }, [supported]);
 
-  const stop = useCallback(() => {
+  const stopListening = useCallback(() => {
     if (recRef.current) { recRef.current.stop(); recRef.current = null; }
     setListening(false);
     stopSpeaking();
@@ -87,10 +91,10 @@ export function useExerciseBuilder() {
 
   const clearExercise = useCallback(() => setExercise(null), []);
 
-  useEffect(() => () => stop(), [stop]);
+  useEffect(() => () => stopListening(), [stopListening]);
 
   return {
     supported, listening, transcript, messages, coachResponse, thinking, exercise,
-    startConversation, stop, sendText, clearExercise
+    greet, startListening, stopListening, sendText, clearExercise
   };
 }
