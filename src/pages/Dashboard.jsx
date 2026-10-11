@@ -6,6 +6,7 @@ import { Activity, ArrowLeft, TrendingUp, Target, Clock } from "lucide-react";
 
 export default function Dashboard() {
   const [dailyData, setDailyData] = useState([]);
+  const [weeklyData, setWeeklyData] = useState([]);
   const [totals, setTotals] = useState({ reps: 0, sessions: 0, minutes: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,22 +14,35 @@ export default function Dashboard() {
   const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
-      const [aggResult, countResult] = await Promise.all([
+      const [dailyAgg, weeklyAgg, countResult] = await Promise.all([
         base44.entities.SessionRecord.aggregate({
           dateBucket: { field: "created_date", unit: "day" },
           sum: ["reps_completed"],
           sort: "date",
           limit: 30
         }),
+        base44.entities.SessionRecord.aggregate({
+          dateBucket: { field: "created_date", unit: "week" },
+          sum: ["reps_completed"],
+          sort: "date",
+          limit: 12
+        }),
         base44.entities.SessionRecord.count({})
       ]);
 
-      const rows = (aggResult?.rows || []).map(r => ({
+      const rows = (dailyAgg?.rows || []).map(r => ({
         date: r._id?.date || r.date || r._id,
         reps: r.sum_reps_completed || 0,
         sessions: r.count || 0
       }));
       setDailyData(rows);
+
+      const weekRows = (weeklyAgg?.rows || []).map(r => ({
+        date: r._id?.date || r.date || r._id,
+        reps: r.sum_reps_completed || 0,
+        sessions: r.count || 0
+      }));
+      setWeeklyData(weekRows);
 
       const totalReps = rows.reduce((s, r) => s + r.reps, 0);
       setTotals({
@@ -45,7 +59,15 @@ export default function Dashboard() {
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
-  const chartData = dailyData.map(d => {
+  const dailyChart = dailyData.map(d => {
+    const date = new Date(d.date);
+    return {
+      label: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      reps: d.reps
+    };
+  });
+
+  const weeklyChart = weeklyData.map(d => {
     const date = new Date(d.date);
     return {
       label: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
@@ -90,31 +112,59 @@ export default function Dashboard() {
               <StatCard icon={Clock} label="Avg Reps / Session" value={totals.sessions > 0 ? Math.round(totals.reps / totals.sessions) : 0} />
             </div>
 
-            <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
-              <h2 className="text-sm font-semibold text-neutral-700 mb-4">Daily Reps Completed</h2>
-              {chartData.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <p className="text-sm text-neutral-400 mb-1">No sessions yet</p>
-                  <p className="text-xs text-neutral-400">Complete a session to see your progress here.</p>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#9ca3af" }} interval="preserveStartEnd" />
-                    <YAxis tick={{ fontSize: 12, fill: "#9ca3af" }} allowDecimals={false} />
-                    <Tooltip
-                      contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13 }}
-                      formatter={(v) => [`${v} reps`, "Completed"]}
-                    />
-                    <Bar dataKey="reps" fill="#111111" radius={[6, 6, 0, 0]} maxBarSize={48} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
+                <h2 className="text-sm font-semibold text-neutral-700 mb-4">Daily Reps</h2>
+                {dailyChart.length === 0 ? (
+                  <EmptyChart />
+                ) : (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={dailyChart} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9ca3af" }} interval="preserveStartEnd" />
+                      <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13 }}
+                        formatter={(v) => [`${v} reps`, "Completed"]}
+                      />
+                      <Bar dataKey="reps" fill="#111111" radius={[6, 6, 0, 0]} maxBarSize={36} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
+                <h2 className="text-sm font-semibold text-neutral-700 mb-4">Weekly Reps</h2>
+                {weeklyChart.length === 0 ? (
+                  <EmptyChart />
+                ) : (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={weeklyChart} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9ca3af" }} interval="preserveStartEnd" />
+                      <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13 }}
+                        formatter={(v) => [`${v} reps`, "Completed"]}
+                      />
+                      <Bar dataKey="reps" fill="#6366f1" radius={[6, 6, 0, 0]} maxBarSize={48} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </div>
           </>
         )}
       </main>
+    </div>
+  );
+}
+
+function EmptyChart() {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <p className="text-sm text-neutral-400 mb-1">No sessions yet</p>
+      <p className="text-xs text-neutral-400">Complete a session to see your progress here.</p>
     </div>
   );
 }
