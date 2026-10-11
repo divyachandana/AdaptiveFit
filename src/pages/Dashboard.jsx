@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { buildStats } from "@/lib/af/dashboardStats";
 import { getPatient } from "@/lib/af/mockDb";
+import GoalReminder from "@/components/dashboard/GoalReminder";
 import RingStat from "@/components/dashboard/RingStat";
 import WeekChart from "@/components/dashboard/WeekChart";
 import Rewards from "@/components/dashboard/Rewards";
@@ -43,6 +44,7 @@ export default function Dashboard() {
           <div className="py-24 grid place-items-center"><Loader2 className="w-8 h-8 animate-spin" /></div>
         ) : (
           <>
+            {!data.patient && <div className="print:hidden"><GoalReminder todayReps={data.stats.todayReps} target={data.goal.daily_reps_target} /></div>}
             <div className="grid md:grid-cols-2 gap-4 print:hidden">
               <RingStat label="Today" value={data.stats.todayReps} target={data.goal.daily_reps_target} />
               <RingStat label="This week" value={data.stats.weekReps} target={data.goal.weekly_reps_target} />
