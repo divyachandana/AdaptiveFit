@@ -1,0 +1,28 @@
+{
+  "name": "MobilityProfile",
+  "type": "object",
+  "properties": {
+    "hands": {
+      "type": "object",
+      "description": "Per-hand results: { Left|Right: { joints: {id: {min,max,rom,ratio,level}}, openness: {open, fist}, tremor } }"
+    },
+    "checked_at": {
+      "type": "number",
+      "description": "Timestamp (ms) of the mobility check"
+    }
+  },
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
