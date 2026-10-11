@@ -62,7 +62,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
       return;
     }
 
-    const analysis = combinedAnalysis(hands);
+    const analysis = combinedAnalysis(hands, ex);
 
     // --- rep counting (fast path) ---
     const prevCount = repStateRef.current.count;

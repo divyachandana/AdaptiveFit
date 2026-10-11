@@ -5,6 +5,7 @@
 // Supports left, right, and both hands via extractHands().
 
 import { EXERCISE_LIBRARY } from "@/lib/af/exercises";
+import { computeJointAngles, inRange } from "@/lib/af/angles";
 
 // MediaPipe Hands 21-landmark connections for skeleton overlay.
 export const HAND_CONNECTIONS = [
@@ -79,7 +80,9 @@ export function combinedConfidence(hands) {
 // Analyze finger spread: openness signal based on fingertip-to-wrist
 // distance relative to knuckle-to-wrist distance. Scale-invariant ratio:
 //   >1 = finger extended (tip beyond knuckle),  <1 = finger curled (tip folded back)
-export function analyzeFingerSpread(landmarks) {
+// When an exercise defines joint angle targets, precise per-joint correction
+// cues are generated from the measured MCP/PIP/DIP angles.
+export function analyzeFingerSpread(landmarks, exercise) {
   if (!landmarks) return { metrics: {}, flags: [], phaseMetric: null, trackable: false };
   const wrist = landmarks[0];
   if (!wrist) return { metrics: {}, flags: [], phaseMetric: null, trackable: false };
@@ -105,31 +108,97 @@ export function analyzeFingerSpread(landmarks) {
   const phaseMetric = ratios.reduce((s, r) => s + r.ratio, 0) / ratios.length;
   metrics.openness = phaseMetric;
 
-  // Flag a lagging finger when the hand should be open.
-  if (phaseMetric > 1.1) {
-    for (const { ratio, name } of ratios) {
-      if (ratio < 0.95) {
-        flags.push({ kind: "bend", finger: name, text: `Try to extend your ${name} finger fully` });
-        break;
+  // Angle-based corrections when the exercise defines joint targets.
+  // Only fire while the hand is curling toward the target (openness dropping),
+  // so we don't nag during the straight/rest phase of a rep.
+  if (exercise?.angles && phaseMetric < 1.05) {
+    const angles = computeJointAngles(landmarks);
+    metrics.angles = angles;
+    const fingers = exercise.fingers || ["index", "middle", "ring", "pinky"];
+    for (const finger of fingers) {
+      const fa = angles[finger];
+      if (!fa) continue;
+      for (const joint of ["mcp", "pip", "dip"]) {
+        const target = exercise.angles[joint];
+        if (!target) continue;
+        if (!inRange(fa[joint], target)) {
+          const cue = exercise.cues?.[joint];
+          if (cue) {
+            flags.push({ kind: "angle", finger, joint, text: cue });
+          }
+          break; // one joint cue per finger
+        }
       }
+      if (flags.length) break; // one correction at a time
     }
   }
-  // Flag when the hand is barely opening.
-  if (phaseMetric < 0.7 && phaseMetric > 0.5) {
-    flags.push({ kind: "range", finger: "hand", text: "Open your hand a little wider" });
+
+  // Openness fallback flags for exercises without angle targets.
+  if (!exercise?.angles) {
+    if (phaseMetric > 1.1) {
+      for (const { ratio, name } of ratios) {
+        if (ratio < 0.95) {
+          flags.push({ kind: "bend", finger: name, text: `Try to extend your ${name} finger fully` });
+          break;
+        }
+      }
+    }
+    if (!flags.length && phaseMetric < 0.7 && phaseMetric > 0.5) {
+      flags.push({ kind: "range", finger: "hand", text: "Open your hand a little wider" });
+    }
   }
 
   return { metrics, flags, phaseMetric, trackable: true };
 }
 
+// Thumb-to-fingertip touch detection (thumb opposition).
+// phaseMetric: 1 = thumb far from all fingertips (rest), 0 = thumb touching a
+// fingertip (target). Rep counts on far → near. Scaled by index-MCP-to-wrist
+// distance so it stays hand-size invariant.
+export function analyzeThumbTouch(landmarks, exercise) {
+  if (!landmarks) return { metrics: {}, flags: [], phaseMetric: null, trackable: false };
+  const thumbTip = landmarks[4];
+  const wrist = landmarks[0];
+  const indexMcp = landmarks[5];
+  if (!thumbTip || !wrist || !indexMcp) {
+    return { metrics: {}, flags: [], phaseMetric: null, trackable: false };
+  }
+  const scale = dist(indexMcp, wrist) || 1;
+  const tips = exercise?.sequence || [8, 12, 16, 20];
+  let minDist = Infinity;
+  for (const t of tips) {
+    const p = landmarks[t];
+    if (!p) continue;
+    const d = dist(thumbTip, p) / scale;
+    if (d < minDist) minDist = d;
+  }
+  if (minDist === Infinity) {
+    return { metrics: {}, flags: [], phaseMetric: null, trackable: false };
+  }
+  // Normalize: ~0.25 = touching, ~1.2+ = fully extended apart.
+  const phaseMetric = Math.min(1, minDist / 1.2);
+  const flags = [];
+  if (phaseMetric > 0.5) {
+    flags.push({
+      kind: "distance",
+      finger: "thumb",
+      text: exercise?.cues?.distance || "Bring your thumb closer to your fingertip."
+    });
+  }
+  return { metrics: { thumb_tip_distance: minDist }, flags, phaseMetric, trackable: true };
+}
+
 // Combined analysis across multiple hands. For "both hands" exercises we
 // expose per-hand metrics so the rep state machine can track each hand
 // independently and only count a shared rep when both hands complete.
-export function combinedAnalysis(hands) {
+export function combinedAnalysis(hands, exercise) {
   if (!hands || !hands.length) {
     return { metrics: {}, flags: [], phaseMetric: null, trackable: false, perHand: [] };
   }
-  const perHand = hands.map(h => analyzeFingerSpread(h.landmarks));
+  const analyze = (h) => exercise?.detect === "thumbTouch"
+    ? analyzeThumbTouch(h.landmarks, exercise)
+    : analyzeFingerSpread(h.landmarks, exercise);
+  const perHand = hands.map(analyze);
 
   if (perHand.length === 1) {
     return { ...perHand[0], perHand };
@@ -158,7 +227,9 @@ export function combinedAnalysis(hands) {
 export function updateRepState(state, exercise, analysis) {
   const ex = EXERCISE_LIBRARY[exercise];
   if (!ex || ex.type !== "pose") return { count: state.count, phase: state.phase, rep: false };
-  const OPEN = 1.15, CLOSED = 0.85; // ratio-scale thresholds
+  // Per-exercise phase thresholds (defaults suit the openness ratio).
+  const OPEN = ex.phase?.open ?? 1.15;
+  const CLOSED = ex.phase?.closed ?? 0.85;
 
   // Both-hands mode: independent per-hand tracking, shared count = min.
   if (analysis.perHand && analysis.perHand.length > 1) {

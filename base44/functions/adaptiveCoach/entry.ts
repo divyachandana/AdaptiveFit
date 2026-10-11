@@ -21,7 +21,11 @@ const PLANS = {
   ],
   hands: [
     { name: "Hand Open-Close", side: "both", targetReps: 3, focus: "Open your fingers, then make a comfortable fist.", cue: "Open and close your hands" },
-    { name: "Finger Spreads", side: "both", targetReps: 3, focus: "Spread your fingers apart, then bring them together.", cue: "Spread your fingers" }
+    { name: "Finger Spreads", side: "both", targetReps: 3, focus: "Spread your fingers apart, then bring them together.", cue: "Spread your fingers" },
+    { name: "Hook Fist", side: "both", targetReps: 3, focus: "Curl your fingertips into a hook, keep big knuckles straight.", cue: "Curl your fingertips into a hook" },
+    { name: "Full Fist", side: "both", targetReps: 3, focus: "Make a gentle full fist, all joints bent, don't squeeze.", cue: "Make a gentle full fist" },
+    { name: "Thumb-to-Fingertip Touch", side: "both", targetReps: 3, focus: "Touch your thumb to each fingertip, making an O.", cue: "Touch your thumb to each fingertip" },
+    { name: "Knuckle Bend", side: "both", targetReps: 3, focus: "Bend the middle joints of your fingers, knuckles stay straight.", cue: "Bend your middle finger joints" }
   ]
 };
 
