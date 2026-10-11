@@ -6,6 +6,7 @@ import { Link, useLocation } from "react-router-dom";
 const LINKS = [
   { to: "/", label: "Learn" },
   { to: "/signs/drill", label: "Rapid drill" },
+  { to: "/signs/move", label: "Sign & Move" },
   { to: "/signs/translate", label: "Translator" },
   { to: "/signs/calibrate", label: "Calibrate" },
   { to: "/exercise", label: "Exercise coach" },
