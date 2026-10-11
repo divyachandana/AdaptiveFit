@@ -11,6 +11,7 @@
 //   spread, touch, gap ("open"|"closed"), crossed, thumbOnMiddle, tipsOnThumb
 
 import { loadSamples, matchCalibrated } from "@/lib/af/calibration";
+import { getSettings } from "@/lib/af/handSettings";
 
 const FINGERS = [
   { name: "index", mcp: 5, pip: 6, tip: 8 },
@@ -73,9 +74,10 @@ export function readHand(lm) {
     const a = jointAngle(lm[f.mcp], lm[f.pip], lm[f.tip]);
     curl[f.name] = a < 35 ? "straight" : a < 115 ? "bent" : "fist";
   }
-  const thumb = d(lm[4], lm[5]) / palm > 0.55 ? "out" : "in";
+  const cfg = getSettings();
+  const thumb = d(lm[4], lm[5]) / palm > cfg.thumbOut ? "out" : "in";
   const spread = d(lm[8], lm[12]) / (d(lm[5], lm[9]) || 1) > 1.6;
-  const touch = d(lm[4], lm[8]) / palm < 0.3;
+  const touch = d(lm[4], lm[8]) / palm < cfg.touch;
   const gap = d(lm[4], lm[8]) / palm < 0.3 && d(lm[4], lm[12]) / palm < 0.45 ? "closed" : d(lm[4], lm[8]) / palm > 0.4 ? "open" : "mid";
 
   // Pointing direction: wrist → middle knuckle

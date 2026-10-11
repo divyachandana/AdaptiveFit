@@ -5,8 +5,7 @@
 import { base44 } from "@/api/base44Client";
 
 const KEY = "asl_calibration_v1";
-const MATCH_MAX = 0.55; // max average distance to count as a match
-const MARGIN = 0.08;    // best letter must beat the runner-up by this much
+import { getSettings, syncSettings } from "@/lib/af/handSettings";
 
 let cache = null;
 export function loadSamples() {
@@ -47,6 +46,7 @@ async function pushLetter(letter, vectors) {
 export async function syncCalibration() {
   const user = await me();
   if (!user) return false;
+  await syncSettings();
   const { items } = await Cal().filter({ created_by_id: user.id }, { limit: 100 });
   const local = loadSamples();
   const merged = { ...local };
@@ -83,7 +83,8 @@ export function matchCalibrated(lm, handedness) {
     return { letter, distance: ds.reduce((a, b) => a + b, 0) / ds.length };
   }).sort((a, b) => a.distance - b.distance);
   const [best, next] = scored;
-  if (best.distance > MATCH_MAX) return null;
-  if (next && next.distance - best.distance < MARGIN) return null;
+  const { matchMax, margin } = getSettings();
+  if (best.distance > matchMax) return null;
+  if (next && next.distance - best.distance < margin) return null;
   return best;
 }
