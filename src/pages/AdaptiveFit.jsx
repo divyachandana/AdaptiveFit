@@ -145,6 +145,7 @@ export default function AdaptiveFit() {
 
   // Start session
   const startSession = useCallback((startRoutine) => {
+    if (!startRoutine?.exercises) startRoutine = null;
     const r = startRoutine || routine;
     if (!r) return;
     correctionsCountRef.current = 0;

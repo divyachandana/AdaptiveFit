@@ -121,7 +121,7 @@ export default function SetupScreen({ onStart, voiceSupported, routine, onSelect
       </div>
 
       <button
-        onClick={onStart}
+        onClick={() => onStart()}
         disabled={!routine}
         className="mt-8 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-900 text-white px-7 py-4 text-base font-semibold hover:bg-neutral-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
