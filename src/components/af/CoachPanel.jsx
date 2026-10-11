@@ -23,7 +23,9 @@ export default function CoachPanel({
   transcript,
   coachResponse,
   thinking,
-  onFinish
+  onFinish,
+  routine,
+  exerciseIndex
 }) {
   const pct = targetReps > 0 ? Math.min(100, Math.round((repCount / targetReps) * 100)) : 0;
   const source = correction?.source;
@@ -32,10 +34,19 @@ export default function CoachPanel({
     <div className="w-full bg-white rounded-2xl ring-1 ring-black/5 shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="text-xs font-semibold text-neutral-400 uppercase tracking-wide">
-            Exercise
+          {routine && (
+            <div className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-0.5">
+              {routine.name} · {exerciseIndex + 1} of {routine.exercises.length}
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-neutral-900">{exercise?.name}</h2>
+            {exercise?.side && (
+              <span className="text-xs rounded-full bg-neutral-100 text-neutral-500 px-2 py-0.5">
+                {exercise.side === "left" ? "Left hand" : exercise.side === "right" ? "Right hand" : "Both hands"}
+              </span>
+            )}
           </div>
-          <h2 className="text-2xl font-bold text-neutral-900">{exercise?.name}</h2>
         </div>
         <ConfidenceDot value={confidence} />
       </div>
