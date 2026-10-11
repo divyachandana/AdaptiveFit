@@ -178,6 +178,11 @@ export default function AdaptiveFit() {
     const exercises = completedExercisesRef.current;
     const totalReps = exercises.reduce((s, e) => s + e.reps, 0);
     const bodyParts = routine ? [routine.bodyPart] : ["hands"];
+    const mins = Math.floor(duration / 60), secs = duration % 60;
+    const timeText = mins > 0
+      ? `${mins} minute${mins === 1 ? "" : "s"}${secs ? ` and ${secs} seconds` : ""}`
+      : `${secs} seconds`;
+    const recap = `Session complete. You did ${totalReps} rep${totalReps === 1 ? "" : "s"} in ${timeText}. You should be proud of that effort.`;
 
     try {
       const res = await base44.functions.invoke("adaptiveCoach", {
@@ -203,14 +208,14 @@ export default function AdaptiveFit() {
           exerciseCount: exercises.length
         }
       });
-      speak(data.summary || "Session complete. Great work.", { force: true });
+      speak(`${recap} ${data.summary || ""}`, { force: true, interrupt: true });
     } catch (_) {
       setSummary({
         summary: `You completed ${totalReps} reps across ${exercises.length} exercises. Great work today.`,
         focusNext: "Keep showing up.",
         stats: { reps: totalReps, corrections: 0, duration, exerciseCount: exercises.length }
       });
-      speak("Session complete. Great work.", { force: true });
+      speak(`${recap} Great work today.`, { force: true, interrupt: true });
     } finally {
       setSummaryLoading(false);
       loadGoalsAndProgress();
