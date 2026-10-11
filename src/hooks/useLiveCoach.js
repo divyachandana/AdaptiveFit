@@ -60,7 +60,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
         lastRepAtRef.current = Date.now();
         const n = next.count;
         const cue = n % 5 === 0 ? `Nice! ${n} reps` : `${n}`;
-        speak(cue, { interrupt: false, minGapMs: 400, force: true, silent: true });
+        speak(cue, { interrupt: false, minGapMs: 400, force: true });
         onRepCompleteRef.current?.(n);
       }
     }

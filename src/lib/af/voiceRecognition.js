@@ -1,7 +1,7 @@
 // Browser SpeechRecognition wrapper for two-way voice conversation.
-// Pauses recognition while the coach speaks (stops the mic so it can't
-// transcribe its own voice), resumes when the coach finishes. Continuous
-// and hands-free: auto-restarts on its own after silence or errors.
+// The mic stays on for the whole session (never paused while the coach
+// speaks) and auto-restarts after silence or errors. Coach echo is filtered
+// by the conversation layer.
 
 export function recognitionSupported() {
   return typeof window !== "undefined" &&
@@ -16,11 +16,9 @@ export function createRecognition({ onResult, onError } = {}) {
   rec.interimResults = true;
   rec.lang = "en-US";
 
-  let manualStop = false; // true when the session ends
-  let speaking = false;   // true while the coach is talking (paused)
+  let manualStop = false;
 
   rec.onresult = (e) => {
-    if (speaking) return; // discard results captured while coach speaks
     let interim = "";
     let final = "";
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -33,40 +31,25 @@ export function createRecognition({ onResult, onError } = {}) {
   };
 
   rec.onerror = (e) => {
-    // "no-speech" and "aborted" are expected during continuous listening.
-    // "audio-capture" means the mic is busy (likely the coach speaking).
     if (e.error !== "no-speech" && e.error !== "aborted" && e.error !== "audio-capture") {
       onError?.(e.error);
     }
   };
 
   rec.onend = () => {
-    // Auto-restart unless we deliberately stopped or the coach is speaking.
-    if (!manualStop && !speaking) {
-      try { rec.start(); } catch (_) { /* already starting */ }
+    if (!manualStop) {
+      setTimeout(() => { if (!manualStop) { try { rec.start(); } catch (_) {} } }, 200);
     }
   };
 
   return {
     start() {
       manualStop = false;
-      speaking = false;
       try { rec.start(); } catch (_) {}
     },
     stop() {
       manualStop = true;
-      speaking = false;
       try { rec.stop(); } catch (_) {}
-    },
-    pauseForSpeech() {
-      speaking = true;
-      try { rec.stop(); } catch (_) {}
-    },
-    resumeAfterSpeech() {
-      speaking = false;
-      if (!manualStop) {
-        try { rec.start(); } catch (_) {}
-      }
     }
   };
 }

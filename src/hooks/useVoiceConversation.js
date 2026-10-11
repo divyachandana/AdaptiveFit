@@ -1,14 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { recognitionSupported, createRecognition } from "@/lib/af/voiceRecognition";
-import { speak, onSpeechEvent } from "@/lib/af/speech";
+import { speak, isCoachEcho } from "@/lib/af/speech";
 
 // useVoiceConversation: the two-way voice loop.
 // Listens continuously (browser SpeechRecognition), transcribes the user's
 // speech, routes it to the adaptiveCoach "converse" task for a conversational
-// LLM response, speaks that response, then resumes listening. Pauses
-// recognition while the coach speaks (via onSpeechEvent) so the coach never
-// transcribes its own voice. Detects "I'm done" locally for instant finish,
+// LLM response and speaks it. The mic is never paused; the coach's own
+// voice is filtered out with isCoachEcho. Detects "I'm done" locally for instant finish,
 // and lets the LLM detect other finish phrasing.
 
 const FINISH_PHRASES = [
@@ -43,6 +42,12 @@ export function useVoiceConversation({ exerciseRef, repCountRef, onUserSaysFinis
   useEffect(() => { continueCbRef.current = onUserSaysContinue; }, [onUserSaysContinue]);
 
   const handleTranscript = useCallback(async (text, isFinal) => {
+    // Mic is always on: ignore the coach's own voice, but always let short
+    // spoken commands ("I'm done", "continue") through.
+    const lower = text.toLowerCase();
+    const isShortCommand = lower.split(/\s+/).length <= 4 &&
+      (FINISH_PHRASES.some(p => lower.includes(p)) || CONTINUE_PHRASES.some(p => lower.includes(p)));
+    if (!isShortCommand && isCoachEcho(text)) return;
     if (!isFinal) {
       setTranscript(text);
       return;
@@ -115,18 +120,6 @@ export function useVoiceConversation({ exerciseRef, repCountRef, onUserSaysFinis
     setThinking(false);
     setCoachResponse("");
   }, []);
-
-  // Pause/resume recognition when the coach speaks.
-  useEffect(() => {
-    if (!supported) return;
-    const unsub = onSpeechEvent((evt) => {
-      const rec = recRef.current;
-      if (!rec || !activeRef.current) return;
-      if (evt === "start") { rec.pauseForSpeech(); setListening(false); }
-      else if (evt === "end") { rec.resumeAfterSpeech(); setListening(true); }
-    });
-    return unsub;
-  }, [supported]);
 
   useEffect(() => () => stop(), [stop]);
 

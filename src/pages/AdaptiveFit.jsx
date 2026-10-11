@@ -19,6 +19,7 @@ export default function AdaptiveFit() {
   const [phase, setPhase] = useState("setup");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [briefing, setBriefing] = useState(false);
 
   const exerciseRef = useRef(null);
   const cameraRef = useRef(null);
@@ -78,12 +79,26 @@ export default function AdaptiveFit() {
     askedCompleteRef.current = false;
     reset();
     setPhase("session");
+    setBriefing(true);
     startVoice();
     speak(
-      "Let's do some finger spreads. Open your hand as wide as you can, then make a gentle fist. Hold your hand in front of the camera. You can talk to me anytime. Just say I'm done when you're finished.",
-      { force: true }
+      `Welcome. Today we'll do finger spreads, ${current.targetReps} reps. ` +
+      "Here's how. Hold one hand up in front of the camera, palm facing the screen. " +
+      "Slowly open your hand and spread your fingers as wide as you comfortably can. " +
+      "Then gently close your hand into a soft fist. That's one rep. " +
+      "I'll count each rep out loud and tell you if anything needs adjusting. " +
+      "The microphone stays on, so you can talk to me anytime. Say I'm done whenever you want to stop.",
+      {
+        force: true,
+        interrupt: true,
+        onEnd: () => {
+          reset();
+          setBriefing(false);
+          speak("Ready? Let's begin. Open your hand wide.", { force: true });
+        }
+      }
     );
-  }, [reset, startVoice]);
+  }, [reset, startVoice, current.targetReps]);
 
   const finishSession = useCallback(async () => {
     stopVoice();
@@ -157,7 +172,7 @@ export default function AdaptiveFit() {
 
       {phase === "session" && (
         <div className="max-w-5xl mx-auto px-5 py-8 grid lg:grid-cols-2 gap-8 items-start">
-          <CameraStage ref={cameraRef} onPose={handlePose} highlight={correction} active={true} repCount={repCount} targetReps={current.targetReps} />
+          <CameraStage ref={cameraRef} onPose={handlePose} highlight={correction} active={!briefing} briefing={briefing} repCount={repCount} targetReps={current.targetReps} />
           <CoachPanel
             exercise={current}
             repCount={repCount}

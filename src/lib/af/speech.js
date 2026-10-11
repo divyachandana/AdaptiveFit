@@ -1,43 +1,36 @@
-// Spoken coaching layer (the "speech" modality). Uses the browser's
-// SpeechSynthesis API for the low-latency corrections the live loop needs
-// (under ~1-2s). SpeechSynthesis is queued; we manage the queue so a new
-// correction can interrupt a stale one, and we rate-limit to avoid nagging.
+// Spoken coaching layer. Uses the browser's SpeechSynthesis API for
+// low-latency cues. The mic is never paused while the coach talks; instead
+// we remember what the coach recently said so the voice layer can ignore
+// its own echo (see isCoachEcho).
 
 let voicesCache = [];
 let lastSpoken = 0;
 let lastText = "";
+const recentSpoken = []; // [{ words: Set, at }]
 
-// Speech event system: lets the voice-conversation layer pause recognition
-// while the coach speaks (so it doesn't transcribe its own voice) and resume
-// when speech ends. Uses a debounce + counter to handle interrupt-cancelled
-// utterances (a new speak() right after cancel shouldn't fire a premature "end").
-const listeners = new Set();
-let activeCount = 0;
-let endTimer = null;
-
-function notifyStart() {
-  if (endTimer) { clearTimeout(endTimer); endTimer = null; }
-  activeCount++;
-  if (activeCount === 1) listeners.forEach(f => f("start"));
+function words(text) {
+  return text.toLowerCase().replace(/[^a-z0-9' ]/g, " ").split(/\s+/).filter(Boolean);
 }
 
-function notifyEndSoon() {
-  if (endTimer) clearTimeout(endTimer);
-  endTimer = setTimeout(() => {
-    activeCount = 0;
-    endTimer = null;
-    listeners.forEach(f => f("end"));
-  }, 150);
+function remember(text) {
+  recentSpoken.push({ words: new Set(words(text)), at: Date.now() });
+  while (recentSpoken.length > 6) recentSpoken.shift();
 }
 
-export function onSpeechEvent(fn) {
-  listeners.add(fn);
-  return () => listeners.delete(fn);
+// True when a transcript is most likely the coach's own voice picked up by the mic.
+export function isCoachEcho(text) {
+  const w = words(text);
+  if (w.length === 0) return true;
+  const cutoff = Date.now() - 12000;
+  return recentSpoken.some(r => {
+    if (r.at < cutoff) return false;
+    const hits = w.filter(x => r.words.has(x)).length;
+    return hits / w.length >= 0.7;
+  });
 }
 
 function pickVoice() {
   if (voicesCache.length === 0) voicesCache = window.speechSynthesis?.getVoices() || [];
-  // Prefer a natural-sounding English voice if available.
   return voicesCache.find(v => /en[-_]?(GB|US)/i.test(v.lang) && /female|samantha|google|natural/i.test(v.name))
     || voicesCache.find(v => /^en/i.test(v.lang))
     || voicesCache[0];
@@ -53,13 +46,12 @@ export function primeVoices() {
   window.speechSynthesis.onvoiceschanged = () => { voicesCache = window.speechSynthesis.getVoices(); };
 }
 
-// Speak text. opts: {interrupt, rate, pitch, minGapMs, force}
+// Speak text. opts: {interrupt, rate, pitch, minGapMs, force, onEnd}
 export function speak(text, opts = {}) {
-  if (!speechSupported() || !text) return;
+  if (!speechSupported() || !text) { opts.onEnd?.(); return; }
   const now = Date.now();
   const gap = opts.minGapMs != null ? opts.minGapMs : 1200;
   if (!opts.force && text === lastText && now - lastSpoken < gap) return;
-  if (!opts.force && now - lastSpoken < (opts.minGapMs || 0)) return;
   lastSpoken = now;
   lastText = text;
   if (opts.interrupt) window.speechSynthesis.cancel();
@@ -69,24 +61,17 @@ export function speak(text, opts = {}) {
   u.rate = opts.rate != null ? opts.rate : 1;
   u.pitch = opts.pitch != null ? opts.pitch : 1.05;
   u.volume = 1;
-  if (opts.silent) {
-    // Short cues (rep counts) don't pause the voice-conversation mic.
-    window.speechSynthesis.speak(u);
-    return;
+  remember(text);
+  if (opts.onEnd) {
+    // Fallback in case the browser never fires onend.
+    let done = false;
+    const finish = () => { if (!done) { done = true; opts.onEnd(); } };
+    const fallback = setTimeout(finish, Math.max(3000, text.length * 90));
+    u.onend = () => { clearTimeout(fallback); finish(); };
   }
-  notifyStart();
-  // Fallback: some browsers/environments never fire onend (no audio hardware,
-  // or the utterance was cancelled). Without this, the voice-conversation mic
-  // stays paused forever. Force the "end" event after a max duration.
-  const maxMs = Math.max(3000, Math.min(20000, text.length * 100));
-  const fallback = setTimeout(notifyEndSoon, maxMs);
-  u.onend = () => { clearTimeout(fallback); notifyEndSoon(); };
   window.speechSynthesis.speak(u);
 }
 
 export function stopSpeaking() {
   if (speechSupported()) window.speechSynthesis.cancel();
-  if (endTimer) { clearTimeout(endTimer); endTimer = null; }
-  activeCount = 0;
-  listeners.forEach(f => f("end"));
 }
