@@ -7,7 +7,7 @@ export function dayKey(d) {
 export function buildStats(rows, dailyTarget) {
   const byDay = {};
   for (const r of rows) {
-    const k = dayKey(r.created_date);
+    const k = String(r.created_date).slice(0, 10);
     byDay[k] = (byDay[k] || 0) + (r.sum_reps_completed || 0);
   }
   const today = new Date(); today.setHours(0, 0, 0, 0);
