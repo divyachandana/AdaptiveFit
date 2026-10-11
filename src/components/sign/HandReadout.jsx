@@ -19,6 +19,8 @@ export default function HandReadout({ live }) {
       </div>
       {Object.keys(r.fingers).map((f) => <Row key={f} k={f} v={`${r.fingers[f]} · ${r.curl[f]}`} />)}
       <Row k="thumb" v={`${r.thumb} · ${r.thumbAt}`} />
+      <Row k="thumb across / below" v={`${r.thumbT.toFixed(2)} / ${r.thumbH.toFixed(2)}`} />
+      <Row k="fingertips on thumb" v={r.tipsOnThumb} />
       <Row k="pointing" v={r.dir} />
       <Row k="spread / crossed" v={`${r.spread} / ${r.crossed}`} />
     </div>

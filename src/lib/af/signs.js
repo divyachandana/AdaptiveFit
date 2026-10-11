@@ -36,14 +36,14 @@ export const SIGNS = [
   { letter: "J", fingers: { index: "down", middle: "down", ring: "down", pinky: "up" }, thumb: "in", motion: { tip: 20 }, tip: "Make the I shape, then draw a J in the air with your pinky: down, then curve to the side." },
   { letter: "K", fingers: { index: "up", middle: "up", ring: "down", pinky: "down" }, thumbOnMiddle: true, dir: "up", tip: "Raise your index and middle fingers in a V and press your thumb tip against your middle finger." },
   { letter: "L", fingers: { index: "up", middle: "down", ring: "down", pinky: "down" }, thumb: "out", dir: "up", tip: "Raise your index finger and stretch your thumb out to make an L shape." },
-  { letter: "M", fingers: ALL_DOWN, thumbAt: "M", dir: "up", tip: "Fold three fingers over your thumb, with the thumb tip poking out between your ring and pinky." },
-  { letter: "N", fingers: ALL_DOWN, thumbAt: "N", dir: "up", tip: "Fold two fingers over your thumb, with the thumb tip between your middle and ring fingers." },
+  { letter: "M", fingers: ALL_DOWN, thumbAt: "M", tipsOnThumb: false, dir: "up", tip: "Fold three fingers over your thumb, with the thumb tip poking out between your ring and pinky." },
+  { letter: "N", fingers: ALL_DOWN, thumbAt: "N", tipsOnThumb: false, dir: "up", tip: "Fold two fingers over your thumb, with the thumb tip between your middle and ring fingers." },
   { letter: "O", curl: ALL_BENT, gap: "closed", tip: "Curve all your fingers to touch your thumb tip, making an O shape." },
   { letter: "P", fingers: { index: "up", middle: "up", ring: "down", pinky: "down" }, thumbOnMiddle: true, dir: "down", tip: "Make the K shape, then turn your hand so the fingers point down." },
   { letter: "Q", fingers: { index: "up", middle: "down", ring: "down", pinky: "down" }, thumb: "out", dir: "down", tip: "Make the G shape, then turn your hand so the index finger and thumb point down." },
   { letter: "R", fingers: { index: "up", middle: "up", ring: "down", pinky: "down" }, crossed: true, dir: "up", tip: "Raise your index and middle fingers and cross the middle finger over the index." },
-  { letter: "S", fingers: ALL_DOWN, thumbAt: "S", dir: "up", tip: "Make a tight fist with your thumb wrapped across the front of your fingers." },
-  { letter: "T", fingers: ALL_DOWN, thumbAt: "T", dir: "up", tip: "Make a fist with your thumb tucked between your index and middle fingers." },
+  { letter: "S", fingers: ALL_DOWN, thumbAt: "S", tipsOnThumb: false, dir: "up", tip: "Make a tight fist with your thumb wrapped across the front of your fingers." },
+  { letter: "T", fingers: ALL_DOWN, thumbAt: "T", tipsOnThumb: false, dir: "up", tip: "Make a fist with your thumb tucked between your index and middle fingers." },
   { letter: "U", fingers: { index: "up", middle: "up", ring: "down", pinky: "down" }, spread: false, crossed: false, dir: "up", tip: "Raise your index and middle fingers pressed together." },
   { letter: "V", fingers: { index: "up", middle: "up", ring: "down", pinky: "down" }, spread: true, crossed: false, dir: "up", tip: "Raise your index and middle fingers apart in a V." },
   { letter: "W", fingers: { index: "up", middle: "up", ring: "up", pinky: "down" }, dir: "up", tip: "Raise index, middle and ring fingers apart, and hold your pinky with your thumb." },
@@ -85,20 +85,33 @@ export function readHand(lm) {
   // Crossed: index/middle tips swap order compared to their knuckles
   const crossed = Math.sign(lm[8].x - lm[12].x) !== Math.sign(lm[5].x - lm[9].x) && d(lm[8], lm[12]) / palm < 0.4;
 
-  // Thumb tip position along the knuckle line (0 = index knuckle, 1 = pinky knuckle)
-  const kx = lm[17].x - lm[5].x, ky = lm[17].y - lm[5].y;
-  const t = ((lm[4].x - lm[5].x) * kx + (lm[4].y - lm[5].y) * ky) / ((kx * kx + ky * ky) || 1);
-  const thumbFront = (lm[4].z || 0) < (lm[10].z || 0);
-  let thumbAt = "side";
-  if (t > 0.05) {
-    if (thumbFront && t < 0.75) thumbAt = "S";
-    else thumbAt = t < 0.4 ? "T" : t < 0.75 ? "N" : "M";
+  // Thumb tip measured against the folded-finger knuckle row (index PIP 6 → pinky PIP 18).
+  //   thumbT: 0 = at index finger, 1 = at pinky (where it pokes out between fingers)
+  //   thumbH: how far below that row toward the wrist (wrapped across the front = S)
+  const kx = lm[18].x - lm[6].x, ky = lm[18].y - lm[6].y;
+  const klen = Math.hypot(kx, ky) || 1;
+  const t = ((lm[4].x - lm[6].x) * kx + (lm[4].y - lm[6].y) * ky) / (klen * klen);
+  let nx = -ky / klen, ny = kx / klen;
+  if ((wrist.x - lm[6].x) * nx + (wrist.y - lm[6].y) * ny < 0) { nx = -nx; ny = -ny; }
+  const h = ((lm[4].x - lm[6].x) * nx + (lm[4].y - lm[6].y) * ny) / palm;
+
+  // Fingertips resting on top of the thumb (E): tips close to the thumb tip and farther from the wrist.
+  const tipsOnThumb = d(lm[8], lm[4]) / palm < 0.4 && d(lm[12], lm[4]) / palm < 0.45 &&
+    d(lm[8], wrist) > d(lm[4], wrist) && t > 0.1;
+
+  // Dead zones between letters ("between") so borderline thumbs don't flip letters.
+  let thumbAt = "between";
+  if (t < -0.05) thumbAt = "side";
+  else if (h > 0.22 && t > 0.1 && t < 0.85) thumbAt = "S";
+  else if (h < 0.15) {
+    if (t >= 0 && t < 0.3) thumbAt = "T";
+    else if (t > 0.38 && t < 0.6) thumbAt = "N";
+    else if (t > 0.68) thumbAt = "M";
   }
 
   const thumbOnMiddle = d(lm[4], lm[10]) / palm < 0.4 || d(lm[4], lm[9]) / palm < 0.4;
-  const tipsOnThumb = d(lm[8], lm[4]) / palm < 0.4 && d(lm[12], lm[4]) / palm < 0.45 && t > 0.2;
 
-  return { fingers, curl, thumb, spread, touch, gap, dir, crossed, thumbAt, thumbOnMiddle, tipsOnThumb };
+  return { fingers, curl, thumb, spread, touch, gap, dir, crossed, thumbAt, thumbOnMiddle, tipsOnThumb, thumbT: t, thumbH: h };
 }
 
 // Motion letters: checks the traced fingertip path (points in pixels).
@@ -158,6 +171,7 @@ export function evaluateSign(sign, landmarks, handedness) {
   if (sign.thumbAt && s.thumbAt !== sign.thumbAt) issues.push(THUMB_AT_TEXT[sign.thumbAt]);
   if (sign.thumbOnMiddle && !s.thumbOnMiddle) issues.push("Press your thumb tip against your middle finger");
   if (sign.tipsOnThumb && !s.tipsOnThumb) issues.push("Rest your fingertips on your thumb");
+  if (sign.tipsOnThumb === false && s.tipsOnThumb) issues.push("Curl your fingers tighter into your palm");
   if (sign.crossed === true && !s.crossed) issues.push("Cross your middle finger over your index finger");
   if (sign.crossed === false && s.crossed) issues.push("Uncross your fingers");
   if (sign.spread === true && !s.spread) issues.push("Spread your two fingers apart");
