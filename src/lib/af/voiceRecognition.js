@@ -3,6 +3,8 @@
 // speaks) and auto-restarts after silence or errors. Coach echo is filtered
 // by the conversation layer.
 
+import { getLanguage } from "@/lib/af/languages";
+
 export function recognitionSupported() {
   return typeof window !== "undefined" &&
     ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
@@ -14,7 +16,7 @@ export function createRecognition({ onResult, onError } = {}) {
   const rec = new SR();
   rec.continuous = true;
   rec.interimResults = true;
-  rec.lang = "en-US";
+  rec.lang = getLanguage();
 
   let manualStop = false;
 

@@ -3,13 +3,15 @@
 // we remember what the coach recently said so the voice layer can ignore
 // its own echo (see isCoachEcho).
 
+import { getLanguage } from "@/lib/af/languages";
+
 let voicesCache = [];
 let lastSpoken = 0;
 let lastText = "";
 const recentSpoken = []; // [{ words: Set, at }]
 
 function words(text) {
-  return text.toLowerCase().replace(/[^a-z0-9' ]/g, " ").split(/\s+/).filter(Boolean);
+  return text.toLowerCase().replace(/[^\p{L}\p{N}' ]/gu, " ").split(/\s+/).filter(Boolean);
 }
 
 function remember(text) {
@@ -29,11 +31,14 @@ export function isCoachEcho(text) {
   });
 }
 
-function pickVoice() {
+function pickVoice(lang) {
   if (voicesCache.length === 0) voicesCache = window.speechSynthesis?.getVoices() || [];
-  return voicesCache.find(v => /en[-_]?(GB|US)/i.test(v.lang) && /female|samantha|google|natural/i.test(v.name))
-    || voicesCache.find(v => /^en/i.test(v.lang))
-    || voicesCache[0];
+  const norm = (s) => s.replace("_", "-").toLowerCase();
+  const base = lang.split("-")[0].toLowerCase();
+  const exact = voicesCache.filter(v => norm(v.lang) === lang.toLowerCase());
+  const family = voicesCache.filter(v => norm(v.lang).startsWith(base));
+  const nice = (list) => list.find(v => /female|samantha|google|natural/i.test(v.name)) || list[0];
+  return nice(exact) || nice(family) || null;
 }
 
 export function speechSupported() {
@@ -56,7 +61,9 @@ export function speak(text, opts = {}) {
   lastText = text;
   if (opts.interrupt) window.speechSynthesis.cancel();
   const u = new window.SpeechSynthesisUtterance(text);
-  const v = pickVoice();
+  const lang = getLanguage();
+  u.lang = lang;
+  const v = pickVoice(lang);
   if (v) u.voice = v;
   u.rate = opts.rate != null ? opts.rate : 1;
   u.pitch = opts.pitch != null ? opts.pitch : 1.05;
