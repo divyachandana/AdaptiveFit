@@ -13,6 +13,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import AdaptiveFit from '@/pages/AdaptiveFit';
+import MobilityCheck from '@/pages/MobilityCheck';
 import SignLearn from '@/pages/SignLearn';
 import SignTranslate from '@/pages/SignTranslate';
 import SignDrill from '@/pages/SignDrill';
@@ -55,6 +56,7 @@ const AuthenticatedApp = () => {
       <Route path="/signs/drill" element={<SignDrill />} />
       <Route path="/signs/calibrate" element={<SignCalibrate />} />
       <Route path="/exercise" element={<AdaptiveFit />} />
+      <Route path="/exercise/mobility" element={<MobilityCheck />} />
       <Route path="/sandbox" element={<ModelSandbox />} />
       <Route path="/agent-lab" element={<AgentLab />} />
       <Route path="/whitepaper" element={<Whitepaper />} />

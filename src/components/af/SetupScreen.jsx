@@ -2,6 +2,8 @@ import React from "react";
 import { Accessibility, Camera, ArrowRight, Mic, MicOff, CheckCircle2 } from "lucide-react";
 import GoalProgress from "@/components/af/GoalProgress";
 import { ROUTINES } from "@/lib/af/exercises";
+import { personalizedRoutine, loadMobility } from "@/lib/af/mobility";
+import { Link } from "react-router-dom";
 
 export default function SetupScreen({ onStart, voiceSupported, routine, onSelectRoutine, goal, goalProgress }) {
   return (
@@ -28,10 +30,15 @@ export default function SetupScreen({ onStart, voiceSupported, routine, onSelect
         </div>
       )}
 
+      <Link to="/exercise/mobility" className="mt-6 flex items-center justify-between gap-3 rounded-2xl bg-emerald-50 ring-1 ring-emerald-100 p-4 text-emerald-900">
+        <span className="text-sm"><span className="font-semibold block">{loadMobility() ? "Redo your joint mobility check" : "Take the joint mobility check"}</span>Measures every finger joint and fits your exercises to your range.</span>
+        <ArrowRight className="w-5 h-5 shrink-0" />
+      </Link>
+
       <div className="mt-8">
         <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">Routines</h2>
         <div className="grid sm:grid-cols-2 gap-3">
-          {ROUTINES.map(r => (
+          {[personalizedRoutine(), ...ROUTINES].filter(Boolean).map(r => (
             <button
               key={r.id}
               onClick={() => onSelectRoutine(r)}

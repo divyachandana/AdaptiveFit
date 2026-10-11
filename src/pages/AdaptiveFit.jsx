@@ -41,7 +41,7 @@ export default function AdaptiveFit() {
         name: routine.exercises[exerciseIndex].name,
         ...EXERCISE_LIBRARY[routine.exercises[exerciseIndex].name],
         side: routine.exercises[exerciseIndex].side,
-        targetReps: EXERCISE_LIBRARY[routine.exercises[exerciseIndex].name].defaultReps
+        targetReps: routine.exercises[exerciseIndex].reps ?? EXERCISE_LIBRARY[routine.exercises[exerciseIndex].name].defaultReps
       }
     : null;
 
@@ -128,6 +128,7 @@ export default function AdaptiveFit() {
   const briefForExercise = useCallback((exercise, isFirst = false) => {
     setBriefing(true);
     const lib = EXERCISE_LIBRARY[exercise.name];
+    exercise = { ...exercise, targetReps: exercise.reps ?? lib.defaultReps };
     const sideText = exercise.side === "left" ? "with your left hand"
       : exercise.side === "right" ? "with your right hand"
       : "with both hands";

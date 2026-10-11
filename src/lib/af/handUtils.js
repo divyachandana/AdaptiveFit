@@ -5,6 +5,7 @@
 // Supports left, right, and both hands via extractHands().
 
 import { EXERCISE_LIBRARY } from "@/lib/af/exercises";
+import { repThresholds } from "@/lib/af/mobility";
 
 // MediaPipe Hands 21-landmark connections for skeleton overlay.
 export const HAND_CONNECTIONS = [
@@ -158,7 +159,7 @@ export function combinedAnalysis(hands) {
 export function updateRepState(state, exercise, analysis) {
   const ex = EXERCISE_LIBRARY[exercise];
   if (!ex || ex.type !== "pose") return { count: state.count, phase: state.phase, rep: false };
-  const OPEN = 1.15, CLOSED = 0.85; // ratio-scale thresholds
+  const { OPEN, CLOSED } = repThresholds(); // personal range from the mobility check
 
   // Both-hands mode: independent per-hand tracking, shared count = min.
   if (analysis.perHand && analysis.perHand.length > 1) {
