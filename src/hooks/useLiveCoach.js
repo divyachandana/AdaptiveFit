@@ -48,9 +48,12 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
     const analysis = analyzePose(k, ex.name);
 
     // --- rep counting (fast path) ---
+    const prevCount = repStateRef.current.count;
     const next = updateRepState(repStateRef.current, ex.name, analysis);
-    if (next.count !== repStateRef.current.count) {
-      repStateRef.current = next;
+    // Always persist phase + history — not just on count change — so the
+    // down→up transition survives to the next frame and a rep can complete.
+    repStateRef.current = next;
+    if (next.count !== prevCount) {
       setRepCount(next.count);
       if (next.rep) {
         const n = next.count;

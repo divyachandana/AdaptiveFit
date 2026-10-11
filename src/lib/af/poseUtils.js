@@ -57,18 +57,42 @@ export function upperBodyConfidence(k) {
 
 // ---- Exercise-specific analysis ----
 
-// Arm raise: wrist rises above shoulder height then returns. Tracks both sides.
+// Arm raise (seated): the movement signal is wrist height relative to the
+// shoulder, normalized by shoulder width so thresholds don't depend on how
+// close the user sits to the camera. Uses the higher of the two arms so a
+// one-arm raise still registers. Returns a `trackable` flag so the rep state
+// machine can skip low-confidence frames.
 function analyzeArmRaise(k) {
   const flags = [];
-  let metrics = {};
+  const metrics = {};
+
+  // Body scale — shoulder width is the most stable seated upper-body reference.
+  const ls = k.leftShoulder, rs = k.rightShoulder;
+  let scale = null;
+  if (ls && rs) {
+    scale = dist(ls, rs);
+  } else if (ls || rs) {
+    // Fallback when one shoulder is occluded: upper-arm length.
+    const sh = ls || rs;
+    const el = sh === ls ? k.leftElbow : k.rightElbow;
+    if (el) scale = dist(sh, el);
+  }
+  metrics.scale = scale;
+
+  // Per-arm raise ratio: (shoulder.y − wrist.y) / scale.
+  //   0 = wrist at shoulder height,  >0 = above,  <0 = below.
+  const ratios = [];
+  let trackable = false;
   for (const side of ["left", "right"]) {
     const sh = k[side + "Shoulder"], wr = k[side + "Wrist"], el = k[side + "Elbow"];
-    if (!sh || !wr) continue;
-    const raised = wr.y < sh.y - 12; // image y grows downward
-    const heightRatio = sh.y - wr.y; // positive when wrist above shoulder
-    metrics[side + "_raisedHeight"] = heightRatio;
-    metrics[side + "_raised"] = raised;
-    if (raised && el) {
+    if (!sh || !wr || !scale) continue;
+    // Require a minimum wrist confidence so a flickering detection can't count.
+    if ((wr.score ?? 0) < 0.35) continue;
+    const ratio = (sh.y - wr.y) / scale;
+    metrics[side + "_raiseRatio"] = ratio;
+    ratios.push(ratio);
+    trackable = true;
+    if (ratio > -0.2 && el) {
       const armAngle = angleAt(sh, el, wr); // ~180 straight
       metrics[side + "_armAngle"] = armAngle;
       if (armAngle != null && armAngle < 140) {
@@ -76,23 +100,27 @@ function analyzeArmRaise(k) {
       }
     }
   }
-  // shoulder asymmetry / drop
-  const ls = k.leftShoulder, rs = k.rightShoulder;
+
+  // phaseMetric = highest arm ratio (so a unilateral raise still registers).
+  const phaseMetric = ratios.length > 0 ? Math.max(...ratios) : null;
+
+  // shoulder asymmetry / drop — normalized by scale
   if (ls && rs) {
     const dy = Math.abs(ls.y - rs.y);
     metrics.shoulderDrop = dy;
-    if (dy > 35) {
+    if (scale && dy > scale * 0.25) {
       flags.push({ side: ls.y < rs.y ? "left" : "right", kind: "shoulder", text: "Level your shoulders, sit tall" });
     }
   }
-  // slouch: nose far below shoulder midpoint
+  // slouch: nose far below shoulder midpoint — normalized by scale
   const nose = k.nose;
   if (nose && ls && rs) {
     const midY = (ls.y + rs.y) / 2;
     metrics.slouch = nose.y - midY;
-    if (nose.y - midY > 90) flags.push({ side: "spine", kind: "posture", text: "Sit up tall, lift your chest" });
+    if (scale && nose.y - midY > scale * 0.65) flags.push({ side: "spine", kind: "posture", text: "Sit up tall, lift your chest" });
   }
-  return { metrics, flags, phaseMetric: (metrics.left_raisedHeight || 0) + (metrics.right_raisedHeight || 0) };
+
+  return { metrics, flags, phaseMetric, trackable };
 }
 
 function analyzeOverheadPress(k) {
@@ -133,19 +161,27 @@ const ANALYZERS = {
   neckTilt: analyzeNeckTilt
 };
 
-// Count reps via a phase state machine on phaseMetric (hysteresis).
-// Returns updated state {count, phase} plus whether a rep just completed.
+// Count reps via a phase state machine on the normalized raise ratio.
+// Confidence gate: non-trackable (low-confidence) frames don't advance the
+// count. A 3-frame moving average smooths the signal so a single noisy frame
+// can't trigger a transition. Thresholds are on the ratio scale where
+// 0 = wrist at shoulder height, negative = below.
 export function updateRepState(state, exercise, analysis) {
   const ex = EXERCISE_LIBRARY[exercise];
   if (!ex || ex.type !== "pose") return { count: state.count, phase: state.phase, rep: false };
-  const val = analysis.phaseMetric || 0;
-  const UP = 12, DOWN = -2; // thresholds in px-ish units
+  const val = analysis.phaseMetric;
+  if (!analysis.trackable || val == null) {
+    return { count: state.count, phase: state.phase, rep: false, history: state.history || [] };
+  }
+  const history = [...(state.history || []), val].slice(-3);
+  const smoothed = history.reduce((a, b) => a + b, 0) / history.length;
+  const UP = -0.15, DOWN = -0.55; // ratio-scale thresholds
   let phase = state.phase || "down";
   let count = state.count || 0;
   let rep = false;
-  if (phase === "down" && val > UP) phase = "up";
-  else if (phase === "up" && val < DOWN) { phase = "down"; count += 1; rep = true; }
-  return { count, phase, rep };
+  if (phase === "down" && smoothed > UP) phase = "up";
+  else if (phase === "up" && smoothed < DOWN) { phase = "down"; count += 1; rep = true; }
+  return { count, phase, rep, history };
 }
 
 function EXERCISE_LIB(name) {
