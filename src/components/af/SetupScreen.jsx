@@ -12,14 +12,16 @@ export default function SetupScreen({ onStart, voiceSupported, routine, onSelect
   const handleBuilt = (exercise) => {
     const saved = saveCustomExercise(exercise);
     setBuilderOpen(false);
-    onSelectRoutine({
+    const routine = {
       id: `custom_${String(saved.name).replace(/\s+/g, "_").toLowerCase()}`,
       name: saved.name,
       description: saved.focus,
       bodyPart: "hands",
       custom: true,
       exercises: [{ name: saved.name, side: saved.side }]
-    });
+    };
+    onSelectRoutine(routine);
+    onStart(routine); // auto-start the custom exercise session
   };
 
   return (

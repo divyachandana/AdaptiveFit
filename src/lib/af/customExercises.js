@@ -10,6 +10,7 @@ function normalizeExercise(ex) {
   const detect = ex.detect === "thumbTouch" ? "thumbTouch"
     : ex.detect === "fingerSpread" ? "fingerSpread" : null;
   return {
+    name: ex.name || "Custom exercise",
     id: ex.id || String(ex.name || "custom").replace(/\s+/g, "_").toLowerCase(),
     type: detect ? "pose" : "rhythm",
     sides: ["left", "right", "both"],

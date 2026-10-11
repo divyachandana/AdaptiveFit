@@ -144,18 +144,20 @@ export default function AdaptiveFit() {
   }, [reset, routine]);
 
   // Start session
-  const startSession = useCallback(() => {
-    if (!routine) return;
+  const startSession = useCallback((startRoutine) => {
+    const r = startRoutine || routine;
+    if (!r) return;
     correctionsCountRef.current = 0;
     exerciseCorrectionsRef.current = 0;
     lastCorrectionMsgRef.current = "";
     startTimeRef.current = Date.now();
     advancingRef.current = false;
     completedExercisesRef.current = [];
+    if (startRoutine) setRoutine(startRoutine);
     setExerciseIndex(0);
     setPhase("session");
     startVoice();
-    briefForExercise(routine.exercises[0], true);
+    briefForExercise(r.exercises[0], true);
   }, [routine, startVoice, briefForExercise]);
 
   // Finish session
