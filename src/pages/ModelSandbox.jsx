@@ -110,9 +110,14 @@ export default function ModelSandbox() {
           <div className="w-9 h-9 rounded-xl bg-neutral-900 text-white grid place-items-center font-bold">S</div>
           <span className="font-semibold text-neutral-900 tracking-tight">Model Sandbox</span>
         </div>
-        <Link to="/" className="text-sm text-neutral-400 hover:text-neutral-700 transition-colors">
-          Back to app →
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link to="/agent-lab" className="text-sm text-neutral-400 hover:text-neutral-700 transition-colors">
+            Agent Lab →
+          </Link>
+          <Link to="/" className="text-sm text-neutral-400 hover:text-neutral-700 transition-colors">
+            App →
+          </Link>
+        </div>
       </header>
 
       <div className="max-w-5xl mx-auto px-5 py-8 space-y-6">
