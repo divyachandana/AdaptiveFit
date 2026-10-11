@@ -16,6 +16,7 @@ import AdaptiveFit from '@/pages/AdaptiveFit';
 import SignLearn from '@/pages/SignLearn';
 import SignTranslate from '@/pages/SignTranslate';
 import SignDrill from '@/pages/SignDrill';
+import SignCalibrate from '@/pages/SignCalibrate';
 import ModelSandbox from '@/pages/ModelSandbox';
 import AgentLab from '@/pages/AgentLab';
 import Whitepaper from '@/pages/Whitepaper';
@@ -52,6 +53,7 @@ const AuthenticatedApp = () => {
       <Route path="/" element={<SignLearn />} />
       <Route path="/signs/translate" element={<SignTranslate />} />
       <Route path="/signs/drill" element={<SignDrill />} />
+      <Route path="/signs/calibrate" element={<SignCalibrate />} />
       <Route path="/exercise" element={<AdaptiveFit />} />
       <Route path="/sandbox" element={<ModelSandbox />} />
       <Route path="/agent-lab" element={<AgentLab />} />

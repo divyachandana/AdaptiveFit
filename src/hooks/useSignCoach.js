@@ -26,7 +26,7 @@ export function useSignCoach({ sign, onSuccess }) {
   const handlePose = useCallback((hands) => {
     if (!sign || doneRef.current) return;
     const lm = hands?.[0]?.landmarks;
-    const r = evaluateSign(sign, lm);
+    const r = evaluateSign(sign, lm, hands?.[0]?.handedness);
     const now = Date.now();
 
     if (sign.motion) {

@@ -71,7 +71,7 @@ export function useSignTranslator() {
       return;
     }
 
-    const letter = classifySign(lm);
+    const letter = classifySign(lm, hands?.[0]?.handedness);
     setLive(letter);
     if (!letter || letter !== st.cand) {
       st.off += 1;

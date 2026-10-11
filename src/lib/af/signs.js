@@ -10,6 +10,8 @@
 //   dir:     "up" | "side" | "down"          which way the hand points
 //   spread, touch, gap ("open"|"closed"), crossed, thumbOnMiddle, tipsOnThumb
 
+import { loadSamples, matchCalibrated } from "@/lib/af/calibration";
+
 const FINGERS = [
   { name: "index", mcp: 5, pip: 6, tip: 8 },
   { name: "middle", mcp: 9, pip: 10, tip: 12 },
@@ -133,8 +135,13 @@ const THUMB_AT_TEXT = {
 };
 
 // Returns { correct, issues: [string] } — issues are ordered by importance.
-export function evaluateSign(sign, landmarks) {
+export function evaluateSign(sign, landmarks, handedness) {
   if (!landmarks) return { correct: false, issues: ["Show your hand to the camera"] };
+  // A personal recording of this letter overrides the generic rules.
+  if (loadSamples()[sign.letter]) {
+    const m = matchCalibrated(landmarks, handedness);
+    if (m?.letter === sign.letter) return { correct: true, issues: [] };
+  }
   const s = readHand(landmarks);
   const issues = [];
   if (sign.dir && s.dir !== sign.dir) issues.push(DIR_TEXT[sign.dir]);

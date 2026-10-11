@@ -5,6 +5,7 @@ const LINKS = [
   { to: "/", label: "Learn" },
   { to: "/signs/drill", label: "Rapid drill" },
   { to: "/signs/translate", label: "Translator" },
+  { to: "/signs/calibrate", label: "Calibrate" },
   { to: "/exercise", label: "Exercise coach" }
 ];
 
