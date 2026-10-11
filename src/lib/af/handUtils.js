@@ -122,41 +122,90 @@ export function analyzeFingerSpread(landmarks) {
   return { metrics, flags, phaseMetric, trackable: true };
 }
 
-// Combined analysis across multiple hands — averages the openness metric
-// so the rep state machine works for "both hands" exercises.
+// Combined analysis across multiple hands. For "both hands" exercises we
+// expose per-hand metrics so the rep state machine can track each hand
+// independently and only count a shared rep when both hands complete.
 export function combinedAnalysis(hands) {
   if (!hands || !hands.length) {
-    return { metrics: {}, flags: [], phaseMetric: null, trackable: false };
+    return { metrics: {}, flags: [], phaseMetric: null, trackable: false, perHand: [] };
   }
-  if (hands.length === 1) return analyzeFingerSpread(hands[0].landmarks);
+  const perHand = hands.map(h => analyzeFingerSpread(h.landmarks));
 
-  const analyses = hands.map(h => analyzeFingerSpread(h.landmarks)).filter(a => a.trackable);
-  if (!analyses.length) {
-    return { metrics: {}, flags: [], phaseMetric: null, trackable: false };
+  if (perHand.length === 1) {
+    return { ...perHand[0], perHand };
   }
-  const avgOpenness = analyses.reduce((s, a) => s + (a.phaseMetric || 0), 0) / analyses.length;
-  const flags = analyses.flatMap(a => a.flags);
+
+  const trackable = perHand.filter(a => a.trackable);
+  const avgOpenness = trackable.length
+    ? trackable.reduce((s, a) => s + (a.phaseMetric || 0), 0) / trackable.length
+    : null;
+  const flags = perHand.flatMap(a => a.flags);
   return {
     metrics: { openness: avgOpenness },
     flags,
     phaseMetric: avgOpenness,
-    trackable: true
+    trackable: trackable.length > 0,
+    perHand
   };
 }
 
 // Rep state machine for finger spreads.
-// Phase "open" → "closed" = one rep (open hand, make fist).
-// Confidence gate + 3-frame smoothing.
+// Single hand: phase "open" → "closed" = one rep.
+// Both hands: each hand is tracked independently; a shared rep counts only
+// when BOTH hands have completed an open→closed transition (the shared
+// count is the min of the per-hand counts, so a faster hand waits for the
+// slower one). 3-frame smoothing per hand.
 export function updateRepState(state, exercise, analysis) {
   const ex = EXERCISE_LIBRARY[exercise];
   if (!ex || ex.type !== "pose") return { count: state.count, phase: state.phase, rep: false };
+  const OPEN = 1.15, CLOSED = 0.85; // ratio-scale thresholds
+
+  // Both-hands mode: independent per-hand tracking, shared count = min.
+  if (analysis.perHand && analysis.perHand.length > 1) {
+    const phases = state.phases || analysis.perHand.map(() => "open");
+    const histories = state.histories || analysis.perHand.map(() => []);
+    const handCounts = state.handCounts || analysis.perHand.map(() => 0);
+    const newPhases = [...phases];
+    const newHistories = histories.map(h => [...h]);
+    const newHandCounts = [...handCounts];
+
+    for (let i = 0; i < analysis.perHand.length; i++) {
+      const a = analysis.perHand[i];
+      const val = a.phaseMetric;
+      if (!a.trackable || val == null) continue;
+      const hist = [...newHistories[i], val].slice(-3);
+      newHistories[i] = hist;
+      const smoothed = hist.reduce((s, v) => s + v, 0) / hist.length;
+      let phase = newPhases[i] || "open";
+      if (phase === "open" && smoothed < CLOSED) {
+        phase = "closed";
+        newHandCounts[i] += 1;
+      } else if (phase === "closed" && smoothed > OPEN) {
+        phase = "open";
+      }
+      newPhases[i] = phase;
+    }
+
+    const prevShared = state.count || 0;
+    const sharedCount = Math.min(...newHandCounts);
+    const rep = sharedCount > prevShared;
+    return {
+      count: sharedCount,
+      phase: newPhases.every(p => p === "closed") ? "closed" : "open",
+      rep,
+      phases: newPhases,
+      histories: newHistories,
+      handCounts: newHandCounts
+    };
+  }
+
+  // Single-hand mode.
   const val = analysis.phaseMetric;
   if (!analysis.trackable || val == null) {
     return { count: state.count, phase: state.phase, rep: false, history: state.history || [] };
   }
   const history = [...(state.history || []), val].slice(-3);
   const smoothed = history.reduce((a, b) => a + b, 0) / history.length;
-  const OPEN = 1.15, CLOSED = 0.85; // ratio-scale thresholds
   let phase = state.phase || "open";
   let count = state.count || 0;
   let rep = false;

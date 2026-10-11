@@ -49,6 +49,19 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
 
     const conf = combinedConfidence(hands);
     setConfidence(conf);
+
+    // For "both hands" exercises, both hands must be visible to count reps.
+    if (ex.side === "both" && hands.length < 2) {
+      setConfidence(conf * 0.5);
+      const now = Date.now();
+      if (now - lastLocalCueRef.current > 4000) {
+        lastLocalCueRef.current = now;
+        speak("Show both hands to the camera", { interrupt: false, minGapMs: 0, force: true });
+        setCorrection({ message: "Show both hands to the camera", part: "hand", source: "vision" });
+      }
+      return;
+    }
+
     const analysis = combinedAnalysis(hands);
 
     // --- rep counting (fast path) ---
