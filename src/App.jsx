@@ -10,6 +10,7 @@ import ScrollToTop from './components/ScrollToTop';
 import AdaptiveFit from '@/pages/AdaptiveFit';
 import ModelSandbox from '@/pages/ModelSandbox';
 import AgentLab from '@/pages/AgentLab';
+import Whitepaper from '@/pages/Whitepaper';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -41,6 +42,7 @@ const AuthenticatedApp = () => {
       <Route path="/" element={<AdaptiveFit />} />
       <Route path="/sandbox" element={<ModelSandbox />} />
       <Route path="/agent-lab" element={<AgentLab />} />
+      <Route path="/whitepaper" element={<Whitepaper />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
