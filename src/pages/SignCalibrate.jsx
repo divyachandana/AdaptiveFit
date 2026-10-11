@@ -3,6 +3,7 @@ import CameraStage from "@/components/af/CameraStage";
 import SignNav from "@/components/sign/SignNav";
 import HandReadout from "@/components/sign/HandReadout";
 import ThresholdSettings from "@/components/sign/ThresholdSettings";
+import LiveCalibration from "@/components/sign/LiveCalibration";
 import { SIGNS } from "@/lib/af/signs";
 import { loadSamples, clearLetter, clearAll } from "@/lib/af/calibration";
 import { useCalibrationRecorder } from "@/hooks/useCalibrationRecorder";
@@ -34,6 +35,7 @@ export default function SignCalibrate() {
         <div className="space-y-4">
           <CameraStage onPose={handlePose} active side="both" />
           <div className="rounded-2xl border border-neutral-200 bg-white p-5"><HandReadout live={live} /></div>
+          <LiveCalibration live={live} />
           <ThresholdSettings signedIn={signedIn} />
         </div>
         <div className="space-y-4">

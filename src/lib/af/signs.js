@@ -113,7 +113,7 @@ export function readHand(lm) {
 
   const thumbOnMiddle = d(lm[4], lm[10]) / palm < 0.4 || d(lm[4], lm[9]) / palm < 0.4;
 
-  return { fingers, curl, thumb, spread, touch, gap, dir, crossed, thumbAt, thumbOnMiddle, tipsOnThumb, thumbT: t, thumbH: h };
+  return { thumbRatio: d(lm[4], lm[5]) / palm, touchRatio: d(lm[4], lm[8]) / palm, fingers, curl, thumb, spread, touch, gap, dir, crossed, thumbAt, thumbOnMiddle, tipsOnThumb, thumbT: t, thumbH: h };
 }
 
 // Motion letters: checks the traced fingertip path (points in pixels).

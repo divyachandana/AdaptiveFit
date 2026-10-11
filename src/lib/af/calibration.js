@@ -72,6 +72,18 @@ export function clearAll() {
 }
 export const hasCalibration = () => Object.keys(loadSamples()).length > 0;
 
+// Raw nearest-recording scores (no thresholds), for live tuning.
+export function scoreCalibrated(lm, handedness) {
+  const samples = loadSamples();
+  const letters = Object.keys(samples);
+  if (!lm || !letters.length) return [];
+  const v = normalize(lm, handedness);
+  return letters.map((letter) => {
+    const ds = samples[letter].map((x) => dist(v, x)).sort((a, b) => a - b).slice(0, 5);
+    return { letter, distance: ds.reduce((a, b) => a + b, 0) / ds.length };
+  }).sort((a, b) => a.distance - b.distance);
+}
+
 // Returns { letter, distance } for the best match, or null.
 export function matchCalibrated(lm, handedness) {
   const samples = loadSamples();
