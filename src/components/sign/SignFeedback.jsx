@@ -1,13 +1,19 @@
 import React from "react";
 import { CheckCircle2, AlertCircle } from "lucide-react";
+import HandDiagram from "@/components/sign/HandDiagram";
+import HandHoldSteps from "@/components/sign/HandHoldSteps";
 
 export default function SignFeedback({ sign, result, hold, mastered }) {
   return (
     <div className="space-y-5">
       <div className="rounded-3xl bg-neutral-900 text-white p-8 text-center">
         <p className="text-xs uppercase tracking-[0.2em] text-white/50">Sign the letter</p>
-        <p className="text-8xl font-bold leading-none mt-3">{sign.letter}</p>
+        <div className="mt-3 flex items-center justify-center gap-6">
+          <p className="text-8xl font-bold leading-none">{sign.letter}</p>
+          <div className="rounded-2xl bg-white p-2"><HandDiagram sign={sign} /></div>
+        </div>
         <p className="text-sm text-white/70 mt-5 max-w-sm mx-auto">{sign.tip}</p>
+        <div className="mt-4 max-w-sm mx-auto"><HandHoldSteps sign={sign} /></div>
       </div>
       <div>
         <div className="flex justify-between text-xs text-neutral-500 mb-1.5"><span>{sign.motion ? "Trace the letter" : "Hold steady"}</span><span>{Math.round(hold * 100)}%</span></div>
