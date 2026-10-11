@@ -2,26 +2,42 @@ import { useRef, useState, useCallback } from "react";
 import { evaluateSign, motionProgress } from "@/lib/af/signs";
 import { speak } from "@/lib/af/speech";
 
-const HOLD_FRAMES = 10; // ~1 second of correct placement
-
-export function useSignCoach({ sign, onSuccess }) {
+// adapt: { holdFrames, cueGapMs, rate } from the learner model.
+export function useSignCoach({ sign, onSuccess, adapt = {} }) {
+  const HOLD_FRAMES = adapt.holdFrames || 10;
+  const CUE_GAP = adapt.cueGapMs || 3500;
+  const rate = adapt.rate || 1;
   const holdRef = useRef(0);
   const trailRef = useRef([]);
   const lastCueRef = useRef(0);
   const doneRef = useRef(false);
+  const startRef = useRef(Date.now());
+  const issuesRef = useRef({});
   const [result, setResult] = useState({ correct: false, issues: [] });
   const [hold, setHold] = useState(0);
 
   const reset = useCallback(() => {
     holdRef.current = 0; trailRef.current = []; doneRef.current = false; lastCueRef.current = Date.now();
+    startRef.current = Date.now(); issuesRef.current = {};
     setHold(0); setResult({ correct: false, issues: [] });
   }, []);
 
+  // Behaviour observed for the current attempt (for the learner model).
+  const getStats = useCallback(() => ({
+    seconds: (Date.now() - startRef.current) / 1000, issues: issuesRef.current, done: doneRef.current
+  }), []);
+
+  const cue = (text) => {
+    lastCueRef.current = Date.now();
+    issuesRef.current[text] = (issuesRef.current[text] || 0) + 1;
+    speak(text, { force: true, rate });
+  };
+
   const succeed = useCallback(() => {
     doneRef.current = true;
-    speak(`Perfect. That's the letter ${sign.letter}.`, { force: true, interrupt: true });
-    onSuccess?.();
-  }, [sign, onSuccess]);
+    speak(`Perfect. That's the letter ${sign.letter}.`, { force: true, interrupt: true, rate });
+    onSuccess?.(getStats());
+  }, [sign, onSuccess, getStats, rate]);
 
   const handlePose = useCallback((hands) => {
     if (!sign || doneRef.current) return;
@@ -37,12 +53,12 @@ export function useSignCoach({ sign, onSuccess }) {
         setHold(p);
         setResult({ correct: true, issues: [] });
         if (p >= 1) return succeed();
-        if (now - lastCueRef.current > 5000) { lastCueRef.current = now; speak(`Good shape. Now trace the ${sign.letter}`, { force: true }); }
+        if (now - lastCueRef.current > CUE_GAP + 1500) { lastCueRef.current = now; speak(`Good shape. Now trace the ${sign.letter}`, { force: true, rate }); }
       } else {
         trailRef.current = [];
         setHold(0);
         setResult(r);
-        if (now - lastCueRef.current > 3500) { lastCueRef.current = now; speak(r.issues[0], { force: true }); }
+        if (now - lastCueRef.current > CUE_GAP && lm) cue(r.issues[0]);
       }
       return;
     }
@@ -51,11 +67,9 @@ export function useSignCoach({ sign, onSuccess }) {
     holdRef.current = r.correct ? holdRef.current + 1 : 0;
     setHold(Math.min(holdRef.current / HOLD_FRAMES, 1));
     if (holdRef.current >= HOLD_FRAMES) succeed();
-    else if (!r.correct && now - lastCueRef.current > 3500) {
-      lastCueRef.current = now;
-      speak(r.issues[0], { force: true });
-    }
-  }, [sign, succeed]);
+    else if (!r.correct && lm && now - lastCueRef.current > CUE_GAP) cue(r.issues[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sign, succeed, HOLD_FRAMES, CUE_GAP, rate]);
 
-  return { handlePose, result, hold, reset };
+  return { handlePose, result, hold, reset, getStats };
 }

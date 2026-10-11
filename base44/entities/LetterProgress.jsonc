@@ -1,0 +1,51 @@
+{
+  "name": "LetterProgress",
+  "type": "object",
+  "properties": {
+    "letter": {
+      "type": "string",
+      "description": "ASL letter"
+    },
+    "attempts": {
+      "type": "number",
+      "default": 0
+    },
+    "successes": {
+      "type": "number",
+      "default": 0
+    },
+    "avg_seconds": {
+      "type": "number",
+      "default": 0,
+      "description": "Average time to sign correctly"
+    },
+    "issues": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "How often each correction was needed"
+    },
+    "last_practiced": {
+      "type": "number",
+      "description": "Timestamp (ms) of last practice"
+    }
+  },
+  "required": [
+    "letter"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
