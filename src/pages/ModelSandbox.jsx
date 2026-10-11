@@ -13,6 +13,7 @@ export default function ModelSandbox() {
   const [selected, setSelected] = useState(new Set(["movenet", "hands", "pose-landmarker"]));
   const [phase, setPhase] = useState("idle"); // idle | loading | running | done
   const [currentModel, setCurrentModel] = useState(null);
+  const [loadedModel, setLoadedModel] = useState(null);
   const [progress, setProgress] = useState({ model: "", frame: 0, total: 0 });
   const [results, setResults] = useState({});
   const [errors, setErrors] = useState({});
@@ -76,6 +77,7 @@ export default function ModelSandbox() {
       collector.recordLoad(model.loadTimeMs);
       metricsRef.current[entry.id] = collector;
       modelRef.current = model;
+      setLoadedModel(model);
       frameCountRef.current = 0;
 
       // Run N frames. SandboxCamera runs the model in its rAF loop;
@@ -88,6 +90,7 @@ export default function ModelSandbox() {
 
       model.close();
       modelRef.current = null;
+      setLoadedModel(null);
       setCurrentModel(null);
 
       const summary = collector.summary();
@@ -176,7 +179,7 @@ export default function ModelSandbox() {
           <div>
             <SandboxCamera
               ref={cameraRef}
-              model={currentModel ? modelRef.current : null}
+              model={loadedModel}
               onFrame={handleFrame}
               active={phase === "running"}
             />

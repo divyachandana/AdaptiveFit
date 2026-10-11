@@ -24,7 +24,6 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
   const [repCount, setRepCount] = useState(0);
   const [correction, setCorrection] = useState(null); // {message, part, source}
   const [confidence, setConfidence] = useState(0);
-  const [listening, setListening] = useState(false);
 
   const reset = useCallback(() => {
     repStateRef.current = { count: 0, phase: "open" };
@@ -127,7 +126,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
 
   useEffect(() => () => stopSpeaking(), []);
 
-  return { handlePose, repCount, correction, confidence, reset, setListening, listening };
+  return { handlePose, repCount, correction, confidence, reset };
 }
 
 function mapPart(flag) {

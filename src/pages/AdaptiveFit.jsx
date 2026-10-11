@@ -143,7 +143,7 @@ export default function AdaptiveFit() {
     if (repCount >= current.targetReps && !askedCompleteRef.current) {
       askedCompleteRef.current = true;
       speak(
-        `Great job! You've completed all ${current.targetReps} reps. Want to keep going, or are you done? Just say "continue" or "I'm done".`,
+        `Great job! You've completed all ${current.targetReps} reps. Would you like to keep going, or are you ready to rest?`,
         { force: true, interrupt: true }
       );
     }
