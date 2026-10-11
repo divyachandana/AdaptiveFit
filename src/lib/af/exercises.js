@@ -1,5 +1,5 @@
 // Exercise definitions for AdaptiveFit seated coaching.
-// Each exercise maps to pose metrics computed from MoveNet keypoints.
+// Each exercise maps to pose metrics computed from MediaPipe hand landmarks.
 // "rhythm" exercises are time-counted when pose confidence is low.
 
 export const BODY_PARTS = [
@@ -9,6 +9,15 @@ export const BODY_PARTS = [
 ];
 
 export const EXERCISE_LIBRARY = {
+  "Finger Spreads": {
+    id: "finger_spreads",
+    type: "pose",
+    side: "both",
+    defaultReps: 10,
+    cue: "Spread your fingers wide, then make a fist",
+    focus: "Open your hand as wide as you can, then gently close it.",
+    detect: "fingerSpread"
+  },
   "Arm Raises": {
     id: "arm_raises",
     type: "pose",
@@ -53,15 +62,6 @@ export const EXERCISE_LIBRARY = {
     cue: "Make gentle circles with your wrists",
     focus: "Circle your wrists slowly and smoothly.",
     detect: null
-  },
-  "Hand Open-Close": {
-    id: "hand_open_close",
-    type: "rhythm",
-    side: "both",
-    defaultReps: 12,
-    cue: "Spread your fingers wide, then make a fist",
-    focus: "Open your hand wide, then gently close it.",
-    detect: null
   }
 };
 
@@ -69,9 +69,9 @@ export const EXERCISE_LIBRARY = {
 // so the UI can render instantly before the reasoning model refines it).
 export function defaultPlanForParts(parts) {
   const map = {
-    upper_body: ["Arm Raises", "Overhead Press", "Hand Open-Close"],
+    upper_body: ["Arm Raises", "Overhead Press"],
     neck: ["Neck Tilts", "Neck Turns"],
-    hands: ["Wrist Rotations", "Hand Open-Close"]
+    hands: ["Finger Spreads", "Wrist Rotations"]
   };
   const seen = new Set();
   const out = [];
@@ -80,7 +80,7 @@ export function defaultPlanForParts(parts) {
       if (!seen.has(name)) { seen.add(name); out.push(name); }
     }
   }
-  if (out.length === 0) out.push("Arm Raises");
+  if (out.length === 0) out.push("Finger Spreads");
   return out.map(name => ({
     name,
     ...EXERCISE_LIBRARY[name],

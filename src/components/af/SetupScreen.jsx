@@ -9,12 +9,12 @@ export default function SetupScreen({ onStart, voiceSupported }) {
         <span className="text-sm font-semibold tracking-wide uppercase">AdaptiveFit</span>
       </div>
       <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-neutral-900 leading-tight">
-        A seated exercise coach that <span className="text-emerald-600">sees you</span> and <span className="text-sky-600">talks back</span>.
+        A seated exercise coach that <span className="text-emerald-600">sees your hand</span> and <span className="text-sky-600">talks back</span>.
       </h1>
       <p className="mt-4 text-neutral-600 text-lg leading-relaxed">
-        Today's exercise: <strong className="text-neutral-900">Arm Raises</strong>. Your camera tracks your
-        upper body while your coach watches your form, counts your reps, and talks with you out loud.
-        Just speak. Ask if your form is right, how many you've done, or say "I'm done" when you're finished.
+        Today's exercise: <strong className="text-neutral-900">Finger Spreads</strong>. Hold your hand in front of
+        the camera, open it wide, then make a fist. Your coach tracks each finger, counts your reps, and talks with
+        you out loud. Just speak — ask if your form is right, how many you've done, or say "I'm done" when you're finished.
       </p>
 
       <div className={`mt-6 rounded-2xl p-4 ring-1 flex items-start gap-3 ${voiceSupported ? "bg-sky-50 ring-sky-100" : "bg-amber-50 ring-amber-100"}`}>
@@ -36,7 +36,7 @@ export default function SetupScreen({ onStart, voiceSupported }) {
         className="mt-8 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-900 text-white px-7 py-4 text-base font-semibold hover:bg-neutral-800 transition-colors"
       >
         <Camera className="w-5 h-5" />
-        Start Arm Raises
+        Start Finger Spreads
         <ArrowRight className="w-5 h-5" />
       </button>
     </div>

@@ -1,22 +1,22 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { extractKeypoints, upperBodyConfidence, analyzePose, updateRepState, summarizePose } from "@/lib/af/poseUtils";
+import { handConfidence, analyzeFingerSpread, updateRepState, summarizeHand } from "@/lib/af/handUtils";
 import { speak, stopSpeaking } from "@/lib/af/speech";
 import { EXERCISE_LIBRARY } from "@/lib/af/exercises";
 
 // useLiveCoach owns the real-time correction loop.
-// Vision fast path: local pose math counts reps and fires short, instant
+// Vision fast path: local hand math counts reps and fires short, instant
 // spoken cues for clear deviations. Reasoning path: when a deviation
-// persists, the loop routes the pose summary to the adaptiveCoach backend
+// persists, the loop routes the hand summary to the adaptiveCoach backend
 // function (the LLM reasoning model) for a warmer, specific correction and
-// tells the UI which body part to highlight.
+// tells the UI which finger to highlight.
 export function useLiveCoach({ exerciseRef, onRepComplete }) {
-  const repStateRef = useRef({ count: 0, phase: "down" });
+  const repStateRef = useRef({ count: 0, phase: "open" });
   const lastLocalCueRef = useRef(0);
   const lastLLMAtRef = useRef(0);
   const recentRef = useRef([]);
   const inflightRef = useRef(false);
-  const devRef = useRef(null); // persistent deviation summary for LLM routing
+  const devRef = useRef(null);
   const onRepCompleteRef = useRef(onRepComplete);
   useEffect(() => { onRepCompleteRef.current = onRepComplete; }, [onRepComplete]);
   const [repCount, setRepCount] = useState(0);
@@ -25,7 +25,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
   const [listening, setListening] = useState(false);
 
   const reset = useCallback(() => {
-    repStateRef.current = { count: 0, phase: "down" };
+    repStateRef.current = { count: 0, phase: "open" };
     lastLocalCueRef.current = 0;
     lastLLMAtRef.current = 0;
     recentRef.current = [];
@@ -35,23 +35,20 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
     setConfidence(0);
   }, []);
 
-  const handlePose = useCallback((pose) => {
-    if (!pose) { setConfidence(0); return; }
+  const handlePose = useCallback((landmarks) => {
+    if (!landmarks) { setConfidence(0); return; }
     const ex = exerciseRef.current;
     if (!ex) return;
     const lib = EXERCISE_LIBRARY[ex.name];
     if (!lib || lib.type !== "pose") { setConfidence(0); return; }
 
-    const k = extractKeypoints(pose, 0.3);
-    const conf = upperBodyConfidence(k);
+    const conf = handConfidence(landmarks);
     setConfidence(conf);
-    const analysis = analyzePose(k, ex.name);
+    const analysis = analyzeFingerSpread(landmarks);
 
     // --- rep counting (fast path) ---
     const prevCount = repStateRef.current.count;
     const next = updateRepState(repStateRef.current, ex.name, analysis);
-    // Always persist phase + history — not just on count change — so the
-    // down→up transition survives to the next frame and a rep can complete.
     repStateRef.current = next;
     if (next.count !== prevCount) {
       setRepCount(next.count);
@@ -77,14 +74,14 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
       }
       // Reasoning path: route to LLM if deviation persists and not too soon.
       if (now - lastLLMAtRef.current > 6000 && !inflightRef.current) {
-        routeToReasoning(ex, top, k);
+        routeToReasoning(ex, top, landmarks);
       }
     } else {
       devRef.current = null;
     }
   }, [exerciseRef]);
 
-  const routeToReasoning = useCallback(async (ex, flag, k) => {
+  const routeToReasoning = useCallback(async (ex, flag, landmarks) => {
     inflightRef.current = true;
     lastLLMAtRef.current = Date.now();
     try {
@@ -93,14 +90,13 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
         task: "correct",
         exercise: ex.name,
         deviation: `${flag.kind}: ${flag.text}`,
-        poseSummary: summarizePose(k),
+        poseSummary: summarizeHand(landmarks),
         recentCorrections: recent
       });
       const data = res?.data || res;
       if (data && data.should_correct && data.message) {
         recentRef.current.push(data.message);
         setCorrection({ message: data.message, part: (data.body_part || "").toLowerCase(), source: "reasoning", severity: data.severity });
-        // The reasoning model's phrasing overrides the fast-path cue.
         speak(data.message, { interrupt: true, minGapMs: 0, force: true });
       }
     } catch (_) {
@@ -116,9 +112,6 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
 }
 
 function mapPart(flag) {
-  if (flag.kind === "posture") return "spine";
-  if (flag.kind === "shoulder") return "shoulders";
-  if (flag.side === "left") return "left";
-  if (flag.side === "right") return "right";
-  return "default";
+  if (flag.finger) return flag.finger;
+  return "hand";
 }

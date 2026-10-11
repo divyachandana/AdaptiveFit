@@ -9,9 +9,9 @@ import { EXERCISE_LIBRARY } from "@/lib/af/exercises";
 import { speak, primeVoices, stopSpeaking } from "@/lib/af/speech";
 import { base44 } from "@/api/base44Client";
 
-const ARM_RAISES = {
-  name: "Arm Raises",
-  ...EXERCISE_LIBRARY["Arm Raises"],
+const FINGER_SPREADS = {
+  name: "Finger Spreads",
+  ...EXERCISE_LIBRARY["Finger Spreads"],
   targetReps: 10
 };
 
@@ -28,7 +28,7 @@ export default function AdaptiveFit() {
   const repCountRef = useRef(0);
   const finishRef = useRef(null);
 
-  const current = ARM_RAISES;
+  const current = FINGER_SPREADS;
   useEffect(() => { exerciseRef.current = current; }, [current]);
 
   const { handlePose, repCount, correction, confidence, reset } = useLiveCoach({ exerciseRef });
@@ -69,7 +69,7 @@ export default function AdaptiveFit() {
     setPhase("session");
     startVoice();
     speak(
-      "Let's do some arm raises together. Lift your arms out to the sides, up to shoulder height. You can talk to me anytime. Just say I'm done when you're finished.",
+      "Let's do some finger spreads. Open your hand as wide as you can, then make a gentle fist. Hold your hand in front of the camera. You can talk to me anytime. Just say I'm done when you're finished.",
       { force: true }
     );
   }, [reset, startVoice]);
@@ -81,13 +81,13 @@ export default function AdaptiveFit() {
     setSummaryLoading(true);
     const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
     const reps = repCountRef.current;
-    const exercises = [{ name: "Arm Raises", reps, targetReps: current.targetReps, corrections: correctionsCountRef.current }];
+    const exercises = [{ name: "Finger Spreads", reps, targetReps: current.targetReps, corrections: correctionsCountRef.current }];
     try {
       const res = await base44.functions.invoke("adaptiveCoach", {
         task: "summary",
         exercises,
         durationSeconds: duration,
-        bodyParts: ["upper_body"]
+        bodyParts: ["hands"]
       });
       const data = res?.data || res;
       setSummary({
@@ -99,7 +99,7 @@ export default function AdaptiveFit() {
       speak(data.summary || "Session complete. Great work.", { force: true });
     } catch (_) {
       setSummary({
-        summary: `You completed ${reps} arm raises. Great work today.`,
+        summary: `You completed ${reps} finger spreads. Great work today.`,
         focusNext: "Keep showing up.",
         stats: { reps, corrections: 0, duration }
       });
