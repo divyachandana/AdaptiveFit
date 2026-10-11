@@ -8,6 +8,7 @@ import { useVoiceConversation } from "@/hooks/useVoiceConversation";
 import { EXERCISE_LIBRARY, ROUTINES } from "@/lib/af/exercises";
 import { speak, primeVoices, stopSpeaking } from "@/lib/af/speech";
 import { base44 } from "@/api/base44Client";
+import { Link } from "react-router-dom";
 
 export default function AdaptiveFit() {
   const [phase, setPhase] = useState("setup");
@@ -283,7 +284,7 @@ export default function AdaptiveFit() {
           <div className="w-9 h-9 rounded-xl bg-neutral-900 text-white grid place-items-center font-bold">A</div>
           <span className="font-semibold text-neutral-900 tracking-tight">AdaptiveFit</span>
         </div>
-        <span className="text-xs text-neutral-400 hidden sm:block">Seated exercise · multimodal AI coach</span>
+        <Link to="/dashboard" className="h-11 px-4 inline-flex items-center rounded-xl bg-neutral-900 text-white text-sm font-semibold">Progress dashboard</Link>
       </header>
 
       {phase === "setup" && (

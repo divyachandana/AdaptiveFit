@@ -172,6 +172,37 @@ export default async function (req) {
       });
     }
 
+    if (task === "therapistReport") {
+      const sessions = (Array.isArray(body.sessions) ? body.sessions : []).slice(0, 30).map(s => ({
+        date: String(s.date || "").slice(0, 10),
+        exercises: (Array.isArray(s.exercises) ? s.exercises : []).slice(0, 10).map(x => String(x).slice(0, 60)),
+        reps: Number(s.reps) || 0,
+        target: Number(s.target) || 0,
+        corrections: Number(s.corrections) || 0,
+        duration: Number(s.duration) || 0
+      }));
+      const prompt = `You are assisting an occupational therapist reviewing a client's home seated-exercise data from an AI movement coach (hand open-close, finger spreads, left/right/both hands). Client has limited mobility. Session log (most recent first): ${JSON.stringify(sessions)}. Daily rep goal ${Number(body.dailyTarget) || 15}, weekly ${Number(body.weeklyTarget) || 60}. Write a concise clinical-style report: an overall assessment, observed trends (adherence, completion rate, form corrections, side asymmetry if visible), concerns to watch, and 3-5 recommended therapy exercises with sets/reps and rationale, gentle and appropriate for limited mobility. Note this is decision support, final judgment rests with the therapist. No em-dashes.`;
+      const schema = {
+        type: "object",
+        properties: {
+          assessment: { type: "string" },
+          trends: { type: "array", items: { type: "string" } },
+          concerns: { type: "array", items: { type: "string" } },
+          recommendations: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { exercise: { type: "string" }, dosage: { type: "string" }, rationale: { type: "string" } },
+              required: ["exercise", "dosage", "rationale"]
+            }
+          }
+        },
+        required: ["assessment", "trends", "recommendations"]
+      };
+      const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, response_json_schema: schema });
+      return Response.json(res.data || res);
+    }
+
     return Response.json({ error: "Unknown task" }, { status: 400 });
   } catch (error) {
     return Response.json({ error: error.message || "coach error" }, { status: 500 });
