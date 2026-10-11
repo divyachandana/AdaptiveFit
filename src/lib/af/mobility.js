@@ -13,10 +13,8 @@ export async function saveMobility(hands) {
   const profile = { hands, checked_at: Date.now() };
   localStorage.setItem(KEY, JSON.stringify(profile));
   if (await base44.auth.isAuthenticated()) {
-    const me = await base44.auth.me();
-    const { items } = await base44.entities.MobilityProfile.filter({ created_by_id: me.id }, { limit: 1 });
-    if (items.length) await base44.entities.MobilityProfile.update(items[0].id, profile);
-    else await base44.entities.MobilityProfile.create(profile);
+    // Each check is kept as its own record so progress can be charted over time.
+    await base44.entities.MobilityProfile.create(profile);
   }
   return profile;
 }
@@ -24,7 +22,7 @@ export async function saveMobility(hands) {
 export async function syncMobility() {
   if (!(await base44.auth.isAuthenticated())) return loadMobility();
   const me = await base44.auth.me();
-  const { items } = await base44.entities.MobilityProfile.filter({ created_by_id: me.id }, { sort: "-updated_date", limit: 1 });
+  const { items } = await base44.entities.MobilityProfile.filter({ created_by_id: me.id }, { sort: "-checked_at", limit: 1 });
   if (items[0]) localStorage.setItem(KEY, JSON.stringify({ hands: items[0].hands, checked_at: items[0].checked_at }));
   return loadMobility();
 }

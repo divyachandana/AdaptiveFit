@@ -11,6 +11,7 @@ import DailyProgressTracker from "@/components/dashboard/DailyProgressTracker";
 import WeekChart from "@/components/dashboard/WeekChart";
 import GoalTrendChart from "@/components/dashboard/GoalTrendChart";
 import SessionGoalChart from "@/components/dashboard/SessionGoalChart";
+import RomTrendChart from "@/components/dashboard/RomTrendChart";
 import Rewards from "@/components/dashboard/Rewards";
 import TherapistReport from "@/components/dashboard/TherapistReport";
 
@@ -33,8 +34,11 @@ export default function Dashboard() {
       ]);
       const goal = goalRes.items?.[0] || { daily_reps_target: 15, weekly_reps_target: 60 };
       await logTodayGoal(me.id, goal.daily_reps_target);
-      const history = await loadGoalHistory(me.id, since);
-      setData({ goal, stats: buildStats(agg.rows || [], goal.daily_reps_target, history), sessions: recent.items || [] });
+      const [history, mob] = await Promise.all([
+        loadGoalHistory(me.id, since),
+        base44.entities.MobilityProfile.filter({ created_by_id: me.id }, { sort: "-checked_at", limit: 50 })
+      ]);
+      setData({ goal, stats: buildStats(agg.rows || [], goal.daily_reps_target, history), sessions: recent.items || [], checks: (mob.items || []).reverse() });
     })();
   }, []);
 
@@ -57,6 +61,7 @@ export default function Dashboard() {
             </div>
             <div className="print:hidden"><DailyProgressTracker last7={data.stats.last7} dailyTarget={data.goal.daily_reps_target} /></div>
             <div className="print:hidden"><GoalTrendChart data={data.stats.last30} /></div>
+            {data.checks && <div className="print:hidden"><RomTrendChart checks={data.checks} /></div>}
             <div className="print:hidden"><SessionGoalChart sessions={data.sessions} /></div>
             <div className="print:hidden"><WeekChart data={data.stats.last7} dailyTarget={data.goal.daily_reps_target} /></div>
             <div className="print:hidden"><Rewards stats={data.stats} /></div>
