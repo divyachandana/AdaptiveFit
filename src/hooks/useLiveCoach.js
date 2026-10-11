@@ -17,6 +17,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
   const recentRef = useRef([]);
   const inflightRef = useRef(false);
   const devRef = useRef(null);
+  const lastRepAtRef = useRef(Date.now());
   const onRepCompleteRef = useRef(onRepComplete);
   useEffect(() => { onRepCompleteRef.current = onRepComplete; }, [onRepComplete]);
   const [repCount, setRepCount] = useState(0);
@@ -30,6 +31,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
     lastLLMAtRef.current = 0;
     recentRef.current = [];
     devRef.current = null;
+    lastRepAtRef.current = Date.now();
     setRepCount(0);
     setCorrection(null);
     setConfidence(0);
@@ -53,6 +55,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
     if (next.count !== prevCount) {
       setRepCount(next.count);
       if (next.rep) {
+        lastRepAtRef.current = Date.now();
         const n = next.count;
         const cue = n % 5 === 0 ? `Nice! ${n} reps` : `${n}`;
         speak(cue, { interrupt: false, minGapMs: 400, force: true });
@@ -69,7 +72,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
       const now = Date.now();
       if (now - lastLocalCueRef.current > 3500) {
         lastLocalCueRef.current = now;
-        speak(top.text, { interrupt: true, minGapMs: 0, force: true });
+        speak(top.text, { interrupt: false, minGapMs: 0, force: true });
         setCorrection({ message: top.text, part: mapPart(top), source: "vision" });
       }
       // Reasoning path: route to LLM if deviation persists and not too soon.
@@ -78,6 +81,19 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
       }
     } else {
       devRef.current = null;
+    }
+
+    // --- inactivity cue: coach the user if they haven't moved in a while ---
+    if (conf > 0.4) {
+      const now = Date.now();
+      if (now - lastRepAtRef.current > 8000 && now - lastLocalCueRef.current > 4000) {
+        lastLocalCueRef.current = now;
+        const cue = repStateRef.current.phase === "open"
+          ? "Now make a gentle fist"
+          : "Open your hand as wide as you can";
+        speak(cue, { interrupt: false, minGapMs: 0, force: true });
+        setCorrection({ message: cue, part: "hand", source: "vision" });
+      }
     }
   }, [exerciseRef]);
 
@@ -97,7 +113,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
       if (data && data.should_correct && data.message) {
         recentRef.current.push(data.message);
         setCorrection({ message: data.message, part: (data.body_part || "").toLowerCase(), source: "reasoning", severity: data.severity });
-        speak(data.message, { interrupt: true, minGapMs: 0, force: true });
+        speak(data.message, { interrupt: false, minGapMs: 0, force: true });
       }
     } catch (_) {
       // resilient: if the reasoning model is slow/down, the fast path keeps coaching

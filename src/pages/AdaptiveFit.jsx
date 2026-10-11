@@ -134,7 +134,7 @@ export default function AdaptiveFit() {
 
       {phase === "session" && (
         <div className="max-w-5xl mx-auto px-5 py-8 grid lg:grid-cols-2 gap-8 items-start">
-          <CameraStage ref={cameraRef} onPose={handlePose} highlight={correction} active={true} />
+          <CameraStage ref={cameraRef} onPose={handlePose} highlight={correction} active={true} repCount={repCount} targetReps={current.targetReps} />
           <CoachPanel
             exercise={current}
             repCount={repCount}

@@ -18,7 +18,7 @@ function waitForHandGlobals(timeoutMs = 15000) {
 // element, runs MediaPipe Hands on a throttled rAF loop, draws the detected
 // hand skeleton on a canvas overlay, and highlights the finger the coaching
 // layer is currently correcting.
-const CameraStage = forwardRef(function CameraStage({ onPose, highlight, active }, ref) {
+const CameraStage = forwardRef(function CameraStage({ onPose, highlight, active, repCount, targetReps }, ref) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const detectorRef = useRef(null);
@@ -163,6 +163,12 @@ const CameraStage = forwardRef(function CameraStage({ onPose, highlight, active 
       {status === "ready" && (
         <div className="absolute top-3 left-3 rounded-lg bg-black/50 text-white/90 text-xs px-2.5 py-1.5 pointer-events-none">
           Hold your hand in front of the camera
+        </div>
+      )}
+      {repCount != null && (
+        <div className="absolute top-3 right-3 rounded-xl bg-black/60 text-white px-4 py-2 pointer-events-none text-right">
+          <div className="text-3xl font-bold tabular-nums leading-none">{repCount}</div>
+          <div className="text-xs text-white/70 mt-1">/ {targetReps || 10} reps</div>
         </div>
       )}
     </div>
