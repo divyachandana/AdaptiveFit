@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import CameraStage from "@/components/af/CameraStage";
 import SetupScreen from "@/components/af/SetupScreen";
 import CoachPanel from "@/components/af/CoachPanel";
@@ -163,7 +164,10 @@ export default function AdaptiveFit() {
           <div className="w-9 h-9 rounded-xl bg-neutral-900 text-white grid place-items-center font-bold">A</div>
           <span className="font-semibold text-neutral-900 tracking-tight">AdaptiveFit</span>
         </div>
-        <span className="text-xs text-neutral-400 hidden sm:block">Seated exercise · multimodal AI coach</span>
+        <div className="flex items-center gap-4">
+          <Link to="/dashboard" className="text-xs font-medium text-neutral-600 hover:text-neutral-900 transition-colors hidden sm:block">Progress</Link>
+          <span className="text-xs text-neutral-400 hidden sm:block">Seated exercise · multimodal AI coach</span>
+        </div>
       </header>
 
       {phase === "setup" && (
