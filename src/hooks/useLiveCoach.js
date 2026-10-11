@@ -18,6 +18,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
   const inflightRef = useRef(false);
   const devRef = useRef(null);
   const lastRepAtRef = useRef(Date.now());
+  const lastInactivityRef = useRef(0);
   const onRepCompleteRef = useRef(onRepComplete);
   useEffect(() => { onRepCompleteRef.current = onRepComplete; }, [onRepComplete]);
   const [repCount, setRepCount] = useState(0);
@@ -32,6 +33,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
     recentRef.current = [];
     devRef.current = null;
     lastRepAtRef.current = Date.now();
+    lastInactivityRef.current = 0;
     setRepCount(0);
     setCorrection(null);
     setConfidence(0);
@@ -58,7 +60,7 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
         lastRepAtRef.current = Date.now();
         const n = next.count;
         const cue = n % 5 === 0 ? `Nice! ${n} reps` : `${n}`;
-        speak(cue, { interrupt: false, minGapMs: 400, force: true });
+        speak(cue, { interrupt: false, minGapMs: 400, force: true, silent: true });
         onRepCompleteRef.current?.(n);
       }
     }
@@ -86,7 +88,8 @@ export function useLiveCoach({ exerciseRef, onRepComplete }) {
     // --- inactivity cue: coach the user if they haven't moved in a while ---
     if (conf > 0.4) {
       const now = Date.now();
-      if (now - lastRepAtRef.current > 8000 && now - lastLocalCueRef.current > 4000) {
+      if (now - lastRepAtRef.current > 10000 && now - lastInactivityRef.current > 15000) {
+        lastInactivityRef.current = now;
         lastLocalCueRef.current = now;
         const cue = repStateRef.current.phase === "open"
           ? "Now make a gentle fist"

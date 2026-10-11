@@ -69,6 +69,11 @@ export function speak(text, opts = {}) {
   u.rate = opts.rate != null ? opts.rate : 1;
   u.pitch = opts.pitch != null ? opts.pitch : 1.05;
   u.volume = 1;
+  if (opts.silent) {
+    // Short cues (rep counts) don't pause the voice-conversation mic.
+    window.speechSynthesis.speak(u);
+    return;
+  }
   notifyStart();
   // Fallback: some browsers/environments never fire onend (no audio hardware,
   // or the utterance was cancelled). Without this, the voice-conversation mic
