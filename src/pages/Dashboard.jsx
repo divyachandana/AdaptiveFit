@@ -8,6 +8,7 @@ import GoalReminder from "@/components/dashboard/GoalReminder";
 import RingStat from "@/components/dashboard/RingStat";
 import DailyProgressTracker from "@/components/dashboard/DailyProgressTracker";
 import WeekChart from "@/components/dashboard/WeekChart";
+import GoalTrendChart from "@/components/dashboard/GoalTrendChart";
 import Rewards from "@/components/dashboard/Rewards";
 import TherapistReport from "@/components/dashboard/TherapistReport";
 
@@ -51,6 +52,7 @@ export default function Dashboard() {
               <RingStat label="This week" value={data.stats.weekReps} target={data.goal.weekly_reps_target} />
             </div>
             <div className="print:hidden"><DailyProgressTracker last7={data.stats.last7} dailyTarget={data.goal.daily_reps_target} /></div>
+            <div className="print:hidden"><GoalTrendChart data={data.stats.last30} /></div>
             <div className="print:hidden"><WeekChart data={data.stats.last7} dailyTarget={data.goal.daily_reps_target} /></div>
             <div className="print:hidden"><Rewards stats={data.stats} /></div>
             <TherapistReport sessions={data.sessions} stats={data.stats} goal={data.goal} />

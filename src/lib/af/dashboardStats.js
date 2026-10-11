@@ -11,6 +11,11 @@ export function buildStats(rows, dailyTarget) {
     byDay[k] = (byDay[k] || 0) + (r.sum_reps_completed || 0);
   }
   const today = new Date(); today.setHours(0, 0, 0, 0);
+  const last30 = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    last30.push({ day: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }), reps: byDay[dayKey(d)] || 0, goal: dailyTarget });
+  }
   const last7 = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
@@ -27,7 +32,7 @@ export function buildStats(rows, dailyTarget) {
 
   const totalReps = Object.values(byDay).reduce((a, b) => a + b, 0);
   const goalDays = Object.values(byDay).filter(v => v >= dailyTarget).length;
-  return { todayReps: byDay[dayKey(today)] || 0, weekReps, last7, streak, totalReps, goalDays, activeDays: Object.keys(byDay).length };
+  return { todayReps: byDay[dayKey(today)] || 0, weekReps, last7, last30, streak, totalReps, goalDays, activeDays: Object.keys(byDay).length };
 }
 
 export function buildBadges(s) {
