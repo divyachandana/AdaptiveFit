@@ -4,6 +4,7 @@ import CameraStage from "@/components/af/CameraStage";
 import SignNav from "@/components/sign/SignNav";
 import { useSignTranslator } from "@/hooks/useSignTranslator";
 import WordSuggestions from "@/components/sign/WordSuggestions";
+import WordSignGuide from "@/components/sign/WordSignGuide";
 import { primeVoices } from "@/lib/af/speech";
 
 export default function SignTranslate() {
@@ -18,7 +19,7 @@ export default function SignTranslate() {
         <CameraStage onPose={handlePose} active side="both" />
         <div className="space-y-4">
           <div className="rounded-3xl bg-neutral-900 text-white p-6 flex items-center gap-6">
-            <div className="text-7xl font-bold w-20 text-center">{live || "–"}</div>
+            <div className={`font-bold text-center ${live?.length > 1 ? "text-3xl min-w-20" : "text-7xl w-20"}`}>{live || "–"}</div>
             <div className="flex-1">
               <p className="text-xs uppercase tracking-widest text-white/50">Detecting</p>
               <div className="h-3 rounded-full bg-white/15 mt-2 overflow-hidden"><div className="h-full bg-emerald-400" style={{ width: `${hold * 100}%` }} /></div>
@@ -35,6 +36,7 @@ export default function SignTranslate() {
             <button onClick={actions.clear} className={`${btn} bg-neutral-100`}><Trash2 className="w-5 h-5" />Clear</button>
           </div>
           <p className="text-xs text-neutral-500">Recognizes all 26 letters. Trace J with your pinky and Z with your index finger.</p>
+          <WordSignGuide />
         </div>
       </div>
     </div>

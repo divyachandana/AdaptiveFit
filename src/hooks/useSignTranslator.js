@@ -2,6 +2,7 @@ import { useRef, useState, useCallback } from "react";
 import { classifySign } from "@/lib/af/signClassifier";
 import { SIGNS, readHand, motionProgress } from "@/lib/af/signs";
 import { speak } from "@/lib/af/speech";
+import { pushWordFrame, wordFrame } from "@/lib/af/wordSigns";
 
 const HOLD = 10;      // frames a letter must be held (~1s)
 const RELEASE = 4;    // frames of a different/no sign before a letter can repeat
@@ -19,7 +20,7 @@ export function useSignTranslator() {
   const [words, setWords] = useState([]);
   const [live, setLive] = useState(null);
   const [hold, setHold] = useState(0);
-  const s = useRef({ cand: null, n: 0, armed: true, off: 0, lastSeen: 0, word: "", trail: [], motion: null, motionAt: 0 });
+  const s = useRef({ cand: null, n: 0, armed: true, off: 0, lastSeen: 0, word: "", trail: [], motion: null, motionAt: 0, times: [], wordTrail: [], wordAt: 0 });
 
   const commitWord = useCallback((override) => {
     const w = (override || s.current.word).toUpperCase();
@@ -32,8 +33,9 @@ export function useSignTranslator() {
 
   const addLetter = useCallback((letter, replaceLast) => {
     const st = s.current;
-    if (replaceLast) st.word = st.word.slice(0, -1);
+    if (replaceLast) { st.word = st.word.slice(0, -1); st.times.pop(); }
     st.word += letter;
+    st.times.push(Date.now());
     setText((t) => (replaceLast ? t.slice(0, -1) : t) + letter);
     speak(letter, { force: true, minGapMs: 0 });
   }, []);
@@ -62,6 +64,24 @@ export function useSignTranslator() {
     else if (st.word && now - st.lastSeen > SPACE_MS) commitWord();
 
     // Motion letters: a traced J/Z replaces the I/static letter typed while holding the shape.
+    // Whole-word signs: drop letters typed during the movement, then insert the word.
+    if (lm && now - st.wordAt > 1500) {
+      const r = pushWordFrame(st.wordTrail, wordFrame(lm));
+      st.wordTrail = r.trail;
+      if (r.word) {
+        st.wordAt = now;
+        const drop = st.times.filter((t) => t >= r.since).length;
+        if (drop) { st.word = st.word.slice(0, -drop); st.times = st.times.slice(0, -drop); setText((t) => t.slice(0, -drop)); }
+        if (st.word) commitWord();
+        st.times = [];
+        setText((t) => t + r.word);
+        commitWord(r.word);
+        st.armed = false; st.n = HOLD;
+        setLive(r.word);
+        return;
+      }
+    }
+
     const moved = lm ? trackMotion(lm) : null;
     if (moved) {
       const last = st.word.slice(-1);
