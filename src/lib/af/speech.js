@@ -70,7 +70,12 @@ export function speak(text, opts = {}) {
   u.pitch = opts.pitch != null ? opts.pitch : 1.05;
   u.volume = 1;
   notifyStart();
-  u.onend = () => notifyEndSoon();
+  // Fallback: some browsers/environments never fire onend (no audio hardware,
+  // or the utterance was cancelled). Without this, the voice-conversation mic
+  // stays paused forever. Force the "end" event after a max duration.
+  const maxMs = Math.max(3000, Math.min(20000, text.length * 100));
+  const fallback = setTimeout(notifyEndSoon, maxMs);
+  u.onend = () => { clearTimeout(fallback); notifyEndSoon(); };
   window.speechSynthesis.speak(u);
 }
 
