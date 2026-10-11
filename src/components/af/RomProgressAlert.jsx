@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { TrendingUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { speak } from "@/lib/af/speech";
+import { base44 } from "@/api/base44Client";
 
 export default function RomProgressAlert({ gains }) {
   const { toast } = useToast();
@@ -11,6 +12,7 @@ export default function RomProgressAlert({ gains }) {
     const msg = `Great progress! Your ${top.hand.toLowerCase()} ${top.label.toLowerCase()} gained ${top.gain} degrees of movement${gains.length > 1 ? `, and ${gains.length - 1} more joint${gains.length > 2 ? "s" : ""} improved` : ""}.`;
     toast({ title: "Range of motion improved", description: msg });
     speak(msg, { force: true });
+    base44.auth.isAuthenticated().then((ok) => ok && base44.functions.invoke("notifyRomProgress", { gains }));
   }, [gains, toast]);
 
   if (!gains.length) return null;
