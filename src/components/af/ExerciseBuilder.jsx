@@ -10,7 +10,7 @@ const DETECT_LABEL = {
 
 export default function ExerciseBuilder({ voiceSupported, onClose, onBuilt }) {
   const {
-    supported, listening, transcript, messages, coachResponse, thinking, exercise,
+    supported, listening, transcript, messages, coachResponse, thinking, exercise, micError,
     greet, startListening, stopListening, sendText, clearExercise
   } = useExerciseBuilder();
   const [text, setText] = useState("");
@@ -57,6 +57,16 @@ export default function ExerciseBuilder({ voiceSupported, onClose, onBuilt }) {
             <p className="text-sm text-neutral-400 italic">
               {voiceSupported && supported ? "Tap the mic, then tell the coach what you want to work on — or type below." : "Type what you want to work on below."}
             </p>
+          )}
+          {micError === "blocked" && (
+            <div className="rounded-xl bg-amber-50 ring-1 ring-amber-200 px-3.5 py-2.5 text-sm text-amber-800">
+              Microphone is blocked here. The app preview can't use the mic — open the app in its own browser tab to talk to the coach. You can also type below.
+            </div>
+          )}
+          {micError && micError !== "blocked" && (
+            <div className="rounded-xl bg-amber-50 ring-1 ring-amber-200 px-3.5 py-2.5 text-sm text-amber-800">
+              Voice isn't available right now ({micError}). Type below to keep going.
+            </div>
           )}
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>

@@ -17,6 +17,7 @@ export function useExerciseBuilder() {
   const [coachResponse, setCoachResponse] = useState("");
   const [thinking, setThinking] = useState(false);
   const [exercise, setExercise] = useState(null);
+  const [micError, setMicError] = useState("");
 
   const recRef = useRef(null);
   const inflightRef = useRef(false);
@@ -67,10 +68,15 @@ export function useExerciseBuilder() {
   // Start the mic from an explicit tap (browser requires a user gesture).
   const startListening = useCallback(() => {
     if (!supported) return;
+    setMicError("");
     if (recRef.current) { try { recRef.current.stop(); } catch (_) {} recRef.current = null; }
     const rec = createRecognition({
       onResult: (t, f) => transcriptCbRef.current?.(t, f),
-      onError: () => {}
+      onError: (err) => setMicError(
+        err === "not-allowed" || err === "service-not-allowed"
+          ? "blocked"
+          : err || "unavailable"
+      )
     });
     recRef.current = rec;
     rec.start();
@@ -94,7 +100,7 @@ export function useExerciseBuilder() {
   useEffect(() => () => stopListening(), [stopListening]);
 
   return {
-    supported, listening, transcript, messages, coachResponse, thinking, exercise,
+    supported, listening, transcript, messages, coachResponse, thinking, exercise, micError,
     greet, startListening, stopListening, sendText, clearExercise
   };
 }
