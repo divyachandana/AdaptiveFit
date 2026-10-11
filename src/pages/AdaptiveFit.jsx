@@ -10,6 +10,7 @@ import { speak, primeVoices, stopSpeaking } from "@/lib/af/speech";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import LanguagePicker from "@/components/LanguagePicker";
+import { logTodayGoal } from "@/lib/af/goalHistory";
 
 export default function AdaptiveFit() {
   const [phase, setPhase] = useState("setup");
@@ -65,6 +66,8 @@ export default function AdaptiveFit() {
       } else {
         setGoal(result.items[0]);
       }
+
+      await logTodayGoal(me.id, (result.items?.[0]?.daily_reps_target) ?? 15);
 
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);

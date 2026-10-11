@@ -4,7 +4,7 @@ export function dayKey(d) {
   return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
 }
 
-export function buildStats(rows, dailyTarget) {
+export function buildStats(rows, dailyTarget, goalHistory = {}) {
   const byDay = {};
   for (const r of rows) {
     const k = String(r.created_date).slice(0, 10);
@@ -12,9 +12,13 @@ export function buildStats(rows, dailyTarget) {
   }
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const last30 = [];
+  const logged = Object.keys(goalHistory).sort();
   for (let i = 29; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
-    last30.push({ day: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }), reps: byDay[dayKey(d)] || 0, goal: dailyTarget });
+    const k = dayKey(d);
+    // Goal in effect that day: latest logged target on or before it, else earliest known, else current.
+    const prev = logged.filter(x => x <= k).pop() || logged[0];
+    last30.push({ day: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }), reps: byDay[k] || 0, goal: prev ? goalHistory[prev] : dailyTarget });
   }
   const last7 = [];
   for (let i = 6; i >= 0; i--) {

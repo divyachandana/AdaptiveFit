@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { buildStats } from "@/lib/af/dashboardStats";
 import { getPatient } from "@/lib/af/mockDb";
+import { logTodayGoal, loadGoalHistory } from "@/lib/af/goalHistory";
 import GoalReminder from "@/components/dashboard/GoalReminder";
 import RingStat from "@/components/dashboard/RingStat";
 import DailyProgressTracker from "@/components/dashboard/DailyProgressTracker";
@@ -31,7 +32,9 @@ export default function Dashboard() {
         base44.entities.SessionRecord.filter({ user_id: me.id }, { sort: "-created_date", limit: 30 })
       ]);
       const goal = goalRes.items?.[0] || { daily_reps_target: 15, weekly_reps_target: 60 };
-      setData({ goal, stats: buildStats(agg.rows || [], goal.daily_reps_target), sessions: recent.items || [] });
+      await logTodayGoal(me.id, goal.daily_reps_target);
+      const history = await loadGoalHistory(me.id, since);
+      setData({ goal, stats: buildStats(agg.rows || [], goal.daily_reps_target, history), sessions: recent.items || [] });
     })();
   }, []);
 

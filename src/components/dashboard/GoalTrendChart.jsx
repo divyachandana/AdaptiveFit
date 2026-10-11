@@ -8,7 +8,7 @@ export default function GoalTrendChart({ data }) {
       <div className="flex flex-wrap items-end justify-between gap-2 mb-4">
         <div>
           <h2 className="text-xl font-bold text-neutral-950">Recovery trend · last 30 days</h2>
-          <p className="text-sm text-neutral-600">Daily goal versus reps you actually completed</p>
+          <p className="text-sm text-neutral-600">How your daily goal changed versus the reps you actually completed</p>
         </div>
         <span className="text-sm font-semibold rounded-full bg-emerald-50 text-emerald-800 px-3 py-1">Goal met {met} of 30 days</span>
       </div>

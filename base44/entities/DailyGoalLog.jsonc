@@ -1,0 +1,33 @@
+{
+  "name": "DailyGoalLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Local day (YYYY-MM-DD)"
+    },
+    "daily_reps_target": {
+      "type": "number",
+      "description": "Daily rep target in effect that day"
+    }
+  },
+  "required": [
+    "date",
+    "daily_reps_target"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
