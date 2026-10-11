@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from "react";
 import { evaluateSign, motionProgress } from "@/lib/af/signs";
 import { speak } from "@/lib/af/speech";
+import { postureIssue } from "@/lib/af/posture";
 
 // adapt: { holdFrames, cueGapMs, rate } from the learner model.
 export function useSignCoach({ sign, onSuccess, adapt = {} }) {
@@ -45,6 +46,15 @@ export function useSignCoach({ sign, onSuccess, adapt = {} }) {
     const r = evaluateSign(sign, lm, hands?.[0]?.handedness);
     const now = Date.now();
 
+    // Posture first: a hand out of view or badly placed can't be read reliably.
+    const posture = postureIssue(lm);
+    if (posture) {
+      setResult({ correct: false, issues: [posture] });
+      holdRef.current = 0; setHold(0);
+      if (now - lastCueRef.current > CUE_GAP) cue(posture);
+      return;
+    }
+
     if (sign.motion) {
       if (r.correct) {
         trailRef.current = [...trailRef.current, lm[sign.motion.tip]].slice(-40);
@@ -64,6 +74,10 @@ export function useSignCoach({ sign, onSuccess, adapt = {} }) {
     }
 
     setResult(r);
+    if (r.correct && holdRef.current === 0 && now - lastCueRef.current > 1500) {
+      lastCueRef.current = now;
+      speak("That's right, hold it", { force: true, interrupt: true, rate });
+    }
     holdRef.current = r.correct ? holdRef.current + 1 : 0;
     setHold(Math.min(holdRef.current / HOLD_FRAMES, 1));
     if (holdRef.current >= HOLD_FRAMES) succeed();
