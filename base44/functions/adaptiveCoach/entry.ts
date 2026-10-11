@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { guidanceFor } from '../../shared/exerciseGuidance.ts';
 
 // AdaptiveFit reasoning layer.
 // This is the "reasoning model" in the multimodal stack: it takes the vision
@@ -90,7 +91,7 @@ export default async function (req) {
       const deviation = body.deviation || "deviation detected";
       const poseSummary = body.poseSummary || "seated upper body visible";
       const recent = Array.isArray(body.recentCorrections) ? body.recentCorrections.slice(-3).join(" | ") : "";
-      const prompt = `You are a seated-exercise coach for a wheelchair user. Current exercise: ${exercise}. The vision system reported this deviation: ${deviation}. Pose context: ${poseSummary}. Recent corrections already given: ${recent || "none"}. Decide whether to speak a correction now (avoid nagging if it was just said). If yes, write ONE short, warm, specific correction a person with limited mobility can act on (under 14 words, no jargon). Identify the body part to highlight on screen. Return JSON.`;
+      const prompt = `You are a seated-exercise coach for a wheelchair user. Current exercise: ${exercise}. The vision system reported this deviation: ${deviation}. Pose context: ${poseSummary}. Recent corrections already given: ${recent || "none"}. Exercise guidance: ${guidanceFor(exercise)}. Decide whether to speak a correction now (avoid nagging if it was just said). If yes, write ONE short, warm, specific correction a person with limited mobility can act on (under 14 words, no jargon). Identify the body part to highlight on screen. Return JSON.`;
       const schema = {
         type: "object",
         properties: {
@@ -158,7 +159,7 @@ export default async function (req) {
       const repCount = Number(body.repCount) || 0;
       const targetReps = Number(body.targetReps) || 10;
       const recent = Array.isArray(body.recentCorrections) ? body.recentCorrections.slice(-3).join(" | ") : "";
-      const prompt = `You are a seated-exercise coach for a wheelchair user, talking with them LIVE during ${exercise}. They just said: "${transcript}". Current reps: ${repCount}/${targetReps}. Recent things you said: ${recent || "none"}. Respond conversationally in ONE short sentence (under 16 words). Be warm, specific, and encouraging. If they clearly want to stop or be done, set should_finish true. If they ask about form, reps, or anything else, answer helpfully. No jargon. No em-dashes.`;
+      const prompt = `You are a seated-exercise coach for a wheelchair user, talking with them LIVE during ${exercise}. They just said: "${transcript}". Current reps: ${repCount}/${targetReps}. Recent things you said: ${recent || "none"}. Ground any advice in this exercise guidance knowledge base: ${guidanceFor(exercise)}. If they mention pain, numbness or tingling, tell them to stop and rest. Respond conversationally in ONE short sentence (under 20 words). Be warm, specific, and encouraging. If they clearly want to stop or be done, set should_finish true. If they ask about form, reps, or anything else, answer helpfully. No jargon. No em-dashes.`;
       const schema = {
         type: "object",
         properties: {
