@@ -120,8 +120,8 @@ export function RouterPanel({ routing, exerciseType, onExerciseTypeChange }) {
           onChange={(e) => onExerciseTypeChange(e.target.value)}
           className="text-sm border border-neutral-200 rounded-lg px-2 py-1.5 bg-white"
         >
-          <option value="hands">Hand exercises</option>
-          <option value="full-body">Full-body exercises</option>
+          <option value="hand">Hand exercises</option>
+          <option value="pose">Pose exercises</option>
         </select>
       </div>
 

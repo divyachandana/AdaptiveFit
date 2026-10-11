@@ -2,24 +2,24 @@
 // Given an exercise type and measured metrics, recommends the best model
 // with a transparent, weighted scoring breakdown.
 
-export function routeModel(exerciseType, metricsByModel) {
+export function routeModel(trackingCategory, metricsByModel) {
   const entries = Object.entries(metricsByModel).filter(([, m]) => m && m.frameCount > 0);
   if (!entries.length) {
     return { recommendation: null, reason: 'No benchmark data yet. Run a benchmark first.' };
   }
 
-  const isHandExercise = exerciseType === 'hands';
+  const isHandExercise = trackingCategory === 'hand';
 
-  // Filter to models eligible for this exercise type.
+  // Filter to models eligible for this exercise category.
   const eligible = isHandExercise
-    ? entries.filter(([id]) => id === 'hands')
-    : entries.filter(([id]) => id !== 'hands');
+    ? entries.filter(([id]) => id === 'hands' || id === 'hand-landmarker')
+    : entries.filter(([id]) => id !== 'hands' && id !== 'hand-landmarker');
 
   if (!eligible.length) {
     return {
       recommendation: null,
       reason: isHandExercise
-        ? 'No hand-tracking model was benchmarked. Load MediaPipe Hands and run a benchmark.'
+        ? 'No hand-tracking model was benchmarked. Load a hand model and run a benchmark.'
         : 'No full-body model was benchmarked. Load MoveNet or Pose Landmarker and run a benchmark.',
     };
   }

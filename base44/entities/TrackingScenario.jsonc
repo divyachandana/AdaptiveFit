@@ -1,0 +1,68 @@
+{
+  "name": "TrackingScenario",
+  "type": "object",
+  "properties": {
+    "exercise_id": {
+      "type": "string",
+      "description": "Stable identifier matching the base scenario catalog"
+    },
+    "name": {
+      "type": "string"
+    },
+    "movement_description": {
+      "type": "string"
+    },
+    "user_instruction": {
+      "type": "string"
+    },
+    "game_interaction": {
+      "type": "string"
+    },
+    "release_priority": {
+      "type": "string",
+      "enum": [
+        "mvp",
+        "next_release",
+        "clinician_configured"
+      ],
+      "default": "mvp"
+    },
+    "tracking_category": {
+      "type": "string",
+      "enum": [
+        "hand",
+        "pose"
+      ]
+    },
+    "tracking_method": {
+      "type": "string"
+    },
+    "tracking_notes": {
+      "type": "string",
+      "description": "What to look for when benchmarking this scenario"
+    },
+    "review_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "reviewed"
+      ],
+      "default": "draft"
+    },
+    "reviewer": {
+      "type": "string"
+    },
+    "review_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "content_version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "exercise_id",
+    "name"
+  ]
+}

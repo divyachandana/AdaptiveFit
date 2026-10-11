@@ -134,10 +134,53 @@ export async function loadPoseLandmarker() {
   }
 }
 
+// ─── MediaPipe Hand Landmarker (Tasks Vision, 21 hand landmarks) ───
+// Google's current Tasks Vision hand landmarker — the successor to the
+// legacy MediaPipe Hands solution. Uses the same wasm runtime as the
+// Pose Landmarker for direct comparison.
+export async function loadHandLandmarker() {
+  try {
+    const vision = await import(/* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs');
+    const start = performance.now();
+    const fileset = await vision.FilesetResolver.forVisionTasks(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+    );
+    const landmarker = await vision.HandLandmarker.createFromOptions(fileset, {
+      baseOptions: {
+        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+        delegate: 'GPU',
+      },
+      runningMode: 'VIDEO',
+      numHands: 1,
+    });
+    const loadTimeMs = performance.now() - start;
+    return ok({
+      id: 'hand-landmarker',
+      name: 'Hand Landmarker (Tasks Vision)',
+      type: 'hands',
+      landmarkCount: 21,
+      loadTimeMs,
+      async detect(video) {
+        const t0 = performance.now();
+        const results = landmarker.detectForVideo(video, t0);
+        const inferenceMs = performance.now() - t0;
+        const lms = results?.landmarks?.[0];
+        if (!lms) return { landmarks: null, confidence: 0, inferenceMs };
+        const landmarks = lms.map(p => ({ x: p.x, y: p.y, score: p.visibility ?? 1 }));
+        return { landmarks, confidence: 1, inferenceMs };
+      },
+      close() { try { landmarker.close(); } catch (_) {} },
+    });
+  } catch (e) {
+    return err(e);
+  }
+}
+
 // ─── Registry ───
 export const MODEL_REGISTRY = [
   { id: 'movenet', name: 'MoveNet Lightning', type: 'full-body', landmarks: 17, load: loadMoveNet },
-  { id: 'hands', name: 'MediaPipe Hands', type: 'hands', landmarks: 21, load: loadHands },
+  { id: 'hands', name: 'MediaPipe Hands (Legacy)', type: 'hands', landmarks: 21, load: loadHands },
+  { id: 'hand-landmarker', name: 'Hand Landmarker (Tasks Vision)', type: 'hands', landmarks: 21, load: loadHandLandmarker },
   { id: 'pose-landmarker', name: 'Pose Landmarker Lite', type: 'full-body', landmarks: 33, load: loadPoseLandmarker },
 ];
 
