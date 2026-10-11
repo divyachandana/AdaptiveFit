@@ -8,7 +8,8 @@ const LINKS = [
   { to: "/signs/drill", label: "Rapid drill" },
   { to: "/signs/translate", label: "Translator" },
   { to: "/signs/calibrate", label: "Calibrate" },
-  { to: "/exercise", label: "Exercise coach" }
+  { to: "/exercise", label: "Exercise coach" },
+  { to: "/dashboard", label: "Progress" }
 ];
 
 export default function SignNav() {
