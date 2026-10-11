@@ -1,0 +1,96 @@
+import { useState, useRef, useCallback, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { recognitionSupported, createRecognition } from "@/lib/af/voiceRecognition";
+import { speak, isCoachEcho, stopSpeaking } from "@/lib/af/speech";
+
+// useExerciseBuilder: a two-way voice loop for designing a custom exercise.
+// Listens continuously, transcribes the user, routes the conversation to the
+// adaptiveCoach "buildExercise" task (Claude), speaks the reply, and surfaces
+// the finished exercise when the model marks it ready. Falls back to a text
+// input when speech recognition is unavailable.
+
+export function useExerciseBuilder() {
+  const supported = recognitionSupported();
+  const [listening, setListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [coachResponse, setCoachResponse] = useState("");
+  const [thinking, setThinking] = useState(false);
+  const [exercise, setExercise] = useState(null);
+
+  const recRef = useRef(null);
+  const inflightRef = useRef(false);
+  const messagesRef = useRef([]);
+  const transcriptCbRef = useRef(null);
+
+  const send = useCallback(async (history) => {
+    inflightRef.current = true;
+    setThinking(true);
+    try {
+      const res = await base44.functions.invoke("adaptiveCoach", {
+        task: "buildExercise",
+        messages: history
+      });
+      const data = res?.data || res;
+      const reply = data?.response || "What movement would you like to practice?";
+      setCoachResponse(reply);
+      speak(reply, { force: true, interrupt: true });
+      const newHistory = [...history, { role: "assistant", content: reply }];
+      messagesRef.current = newHistory;
+      setMessages(newHistory);
+      if (data?.ready && data?.exercise) setExercise(data.exercise);
+    } catch (_) {
+      const fallback = "Sorry, I missed that. What movement would you like to try?";
+      setCoachResponse(fallback);
+      speak(fallback, { force: true, interrupt: true });
+    } finally {
+      inflightRef.current = false;
+      setThinking(false);
+      setTranscript("");
+    }
+  }, []);
+
+  const handleTranscript = useCallback((text, isFinal) => {
+    if (isCoachEcho(text)) return;
+    if (!isFinal) { setTranscript(text); return; }
+    setTranscript(text);
+    if (inflightRef.current) return;
+    const history = [...messagesRef.current, { role: "user", content: text }];
+    send(history);
+  }, [send]);
+
+  useEffect(() => { transcriptCbRef.current = handleTranscript; }, [handleTranscript]);
+
+  const startConversation = useCallback(() => {
+    if (!supported || recRef.current) return;
+    const rec = createRecognition({
+      onResult: (t, f) => transcriptCbRef.current?.(t, f),
+      onError: () => {}
+    });
+    recRef.current = rec;
+    rec.start();
+    setListening(true);
+    send([]); // opening line from the coach
+  }, [supported, send]);
+
+  const stop = useCallback(() => {
+    if (recRef.current) { recRef.current.stop(); recRef.current = null; }
+    setListening(false);
+    stopSpeaking();
+  }, []);
+
+  const sendText = useCallback((text) => {
+    if (!text.trim() || inflightRef.current) return;
+    const history = [...messagesRef.current, { role: "user", content: text.trim() }];
+    send(history);
+  }, [send]);
+
+  const clearExercise = useCallback(() => setExercise(null), []);
+
+  useEffect(() => () => stop(), [stop]);
+
+  return {
+    supported, listening, transcript, messages, coachResponse, thinking, exercise,
+    startConversation, stop, sendText, clearExercise
+  };
+}

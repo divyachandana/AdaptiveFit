@@ -211,6 +211,57 @@ export default async function (req) {
       return Response.json(res.data || res);
     }
 
+    if (task === "buildExercise") {
+      const messages = Array.isArray(body.messages) ? body.messages.slice(-20) : [];
+      const convo = messages.map(m => `${m.role === "user" ? "User" : "Coach"}: ${m.content}`).join("\n");
+      const prompt = `You are an adaptive seated-exercise coach for a person with limited mobility. You are helping them DESIGN a custom hand or upper-body exercise through voice conversation.
+
+Ask one short clarifying question at a time: which body part, which hand (left, right, or both), what movement, and how many reps (keep it small, around 3). Once you have enough detail, produce the exercise.
+
+The app counts reps using one of these tracking modes:
+- "fingerSpread": opening/closing the hand, spreading fingers, making fists, curling fingers (anything based on hand openness)
+- "thumbTouch": touching the thumb to each fingertip in turn
+- "none": a timed hold or movement the camera cannot count (wrist rotations, holds, neck moves) where reps are time-counted
+
+Existing examples: "Hand Open-Close" (fingerSpread, both), "Full Fist" (fingerSpread, both), "Thumb-to-Fingertip Touch" (thumbTouch, both), "Wrist Rotations" (none, both).
+
+Conversation so far:
+${convo || "(none yet)"}
+
+Reply with what to SAY to the user (one short warm sentence, no jargon, no em-dashes). Set ready=true ONLY when the exercise is fully defined, and include the exercise object with name, side (left/right/both), defaultReps (1-10), cue (short spoken prompt), focus (one-sentence how-to), and detect (fingerSpread/thumbTouch/none). Otherwise set ready=false and omit exercise.`;
+      const schema = {
+        type: "object",
+        properties: {
+          response: { type: "string" },
+          ready: { type: "boolean" },
+          exercise: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              side: { type: "string", enum: ["left", "right", "both"] },
+              defaultReps: { type: "number" },
+              cue: { type: "string" },
+              focus: { type: "string" },
+              detect: { type: "string", enum: ["fingerSpread", "thumbTouch", "none"] }
+            },
+            required: ["name", "side", "defaultReps", "cue", "focus", "detect"]
+          }
+        },
+        required: ["response", "ready"]
+      };
+      const res = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        prompt,
+        model: "claude-sonnet-5",
+        response_json_schema: schema
+      });
+      const data = res.data || res;
+      return Response.json({
+        response: data.response || "What movement would you like to practice?",
+        ready: !!data.ready,
+        exercise: data.exercise || null
+      });
+    }
+
     return Response.json({ error: "Unknown task" }, { status: 400 });
   } catch (error) {
     return Response.json({ error: error.message || "coach error" }, { status: 500 });

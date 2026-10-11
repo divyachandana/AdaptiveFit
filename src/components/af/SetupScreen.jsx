@@ -1,9 +1,27 @@
-import React from "react";
-import { Accessibility, Camera, ArrowRight, Mic, MicOff, CheckCircle2 } from "lucide-react";
+import React, { useState } from "react";
+import { Accessibility, Camera, ArrowRight, Mic, MicOff, CheckCircle2, Sparkles } from "lucide-react";
 import GoalProgress from "@/components/af/GoalProgress";
+import ExerciseBuilder from "@/components/af/ExerciseBuilder";
 import { ROUTINES } from "@/lib/af/exercises";
+import { customRoutines, saveCustomExercise } from "@/lib/af/customExercises";
 
 export default function SetupScreen({ onStart, voiceSupported, routine, onSelectRoutine, goal, goalProgress }) {
+  const [builderOpen, setBuilderOpen] = useState(false);
+  const routines = [...ROUTINES, ...customRoutines()];
+
+  const handleBuilt = (exercise) => {
+    const saved = saveCustomExercise(exercise);
+    setBuilderOpen(false);
+    onSelectRoutine({
+      id: `custom_${String(saved.name).replace(/\s+/g, "_").toLowerCase()}`,
+      name: saved.name,
+      description: saved.focus,
+      bodyPart: "hands",
+      custom: true,
+      exercises: [{ name: saved.name, side: saved.side }]
+    });
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-5 py-10">
       <div className="flex items-center gap-2 text-emerald-600 mb-3">
@@ -30,6 +48,16 @@ export default function SetupScreen({ onStart, voiceSupported, routine, onSelect
 
       <div className="mt-8">
         <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">Routines</h2>
+        <button
+          onClick={() => setBuilderOpen(true)}
+          className="w-full mb-3 text-left rounded-2xl p-4 bg-gradient-to-r from-emerald-500 to-sky-500 text-white flex items-center gap-3 hover:opacity-95 transition-opacity"
+        >
+          <Sparkles className="w-5 h-5 shrink-0" />
+          <div>
+            <h3 className="font-semibold">Create your own exercise</h3>
+            <p className="text-sm text-white/85">Talk to the coach and design a custom movement.</p>
+          </div>
+        </button>
         <div className="grid sm:grid-cols-2 gap-3">
           {ROUTINES.map(r => (
             <button
@@ -88,6 +116,14 @@ export default function SetupScreen({ onStart, voiceSupported, routine, onSelect
         {routine ? `Start ${routine.name}` : "Select a routine"}
         <ArrowRight className="w-5 h-5" />
       </button>
+
+      {builderOpen && (
+        <ExerciseBuilder
+          voiceSupported={voiceSupported}
+          onClose={() => setBuilderOpen(false)}
+          onBuilt={handleBuilt}
+        />
+      )}
     </div>
   );
 }
