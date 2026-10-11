@@ -34,6 +34,14 @@ export default function AdaptiveFit() {
   const { handlePose, repCount, correction, confidence, reset } = useLiveCoach({ exerciseRef });
   useEffect(() => { repCountRef.current = repCount; }, [repCount]);
 
+  const askedCompleteRef = useRef(false);
+
+  const continueSession = useCallback(() => {
+    askedCompleteRef.current = false;
+    reset();
+    speak("Let's keep going. Open your hand wide, then make a gentle fist.", { force: true, interrupt: true });
+  }, [reset]);
+
   const {
     supported: voiceSupported,
     listening,
@@ -45,7 +53,9 @@ export default function AdaptiveFit() {
   } = useVoiceConversation({
     exerciseRef,
     repCountRef,
-    onUserSaysFinish: () => finishRef.current?.()
+    onUserSaysFinish: () => finishRef.current?.(),
+    onUserSaysContinue: continueSession,
+    awaitingChoiceRef: askedCompleteRef
   });
 
   useEffect(() => {
@@ -65,6 +75,7 @@ export default function AdaptiveFit() {
     correctionsCountRef.current = 0;
     lastCorrectionMsgRef.current = "";
     startTimeRef.current = Date.now();
+    askedCompleteRef.current = false;
     reset();
     setPhase("session");
     startVoice();
@@ -110,6 +121,18 @@ export default function AdaptiveFit() {
   }, [current, stopVoice]);
 
   useEffect(() => { finishRef.current = finishSession; }, [finishSession]);
+
+  // When all target reps are done, ask if the user wants to continue or stop.
+  useEffect(() => {
+    if (phase !== "session") return;
+    if (repCount >= current.targetReps && !askedCompleteRef.current) {
+      askedCompleteRef.current = true;
+      speak(
+        `Great job! You've completed all ${current.targetReps} reps. Want to keep going, or are you done? Just say "continue" or "I'm done".`,
+        { force: true, interrupt: true }
+      );
+    }
+  }, [repCount, phase, current.targetReps]);
 
   const restart = useCallback(() => {
     stopSpeaking();

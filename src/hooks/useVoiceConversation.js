@@ -18,7 +18,13 @@ const FINISH_PHRASES = [
   "i want to stop", "i wanna stop", "that's it", "thats it for today"
 ];
 
-export function useVoiceConversation({ exerciseRef, repCountRef, onUserSaysFinish }) {
+const CONTINUE_PHRASES = [
+  "continue", "keep going", "keep it going", "more", "again", "one more",
+  "let's go", "lets go", "yes", "yeah", "yep", "sure", "ok", "okay",
+  "do another", "another round", "let's do more", "lets do more"
+];
+
+export function useVoiceConversation({ exerciseRef, repCountRef, onUserSaysFinish, onUserSaysContinue, awaitingChoiceRef }) {
   const [supported] = useState(() => recognitionSupported());
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -30,9 +36,11 @@ export function useVoiceConversation({ exerciseRef, repCountRef, onUserSaysFinis
   const inflightRef = useRef(false);
   const recentRef = useRef([]);
   const finishCbRef = useRef(onUserSaysFinish);
+  const continueCbRef = useRef(onUserSaysContinue);
   const transcriptCbRef = useRef(null);
 
   useEffect(() => { finishCbRef.current = onUserSaysFinish; }, [onUserSaysFinish]);
+  useEffect(() => { continueCbRef.current = onUserSaysContinue; }, [onUserSaysContinue]);
 
   const handleTranscript = useCallback(async (text, isFinal) => {
     if (!isFinal) {
@@ -44,6 +52,12 @@ export function useVoiceConversation({ exerciseRef, repCountRef, onUserSaysFinis
     // Local finish detection (instant, no LLM round-trip).
     if (FINISH_PHRASES.some(p => text.toLowerCase().includes(p))) {
       finishCbRef.current?.();
+      return;
+    }
+
+    // Local continue detection (only after completing all reps).
+    if (awaitingChoiceRef?.current && CONTINUE_PHRASES.some(p => text.toLowerCase().includes(p))) {
+      continueCbRef.current?.();
       return;
     }
 
