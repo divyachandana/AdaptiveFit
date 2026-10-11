@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import RomProgressAlert from "@/components/af/RomProgressAlert";
+import { romGains } from "@/lib/af/romProgress";
 import { Link } from "react-router-dom";
 import CameraStage from "@/components/af/CameraStage";
 import JointReport from "@/components/af/JointReport";
@@ -13,6 +15,7 @@ export default function MobilityCheck() {
   const profile = result || saved;
   const limited = profile ? limitedJoints(profile) : [];
   const routine = profile ? personalizedRoutine(profile) : null;
+  const gains = useMemo(() => (result && saved ? romGains(saved, result) : []), [result, saved]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white">
@@ -42,6 +45,7 @@ export default function MobilityCheck() {
             )}
           </div>
         </div>
+        <RomProgressAlert gains={gains} />
         {profile && <JointReport profile={profile} />}
       </div>
     </div>
