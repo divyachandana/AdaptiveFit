@@ -11,7 +11,7 @@ export const HAND_SCENARIOS = [
     gameInteraction: "Open a flower; closing resets it for the next cycle.",
     releasePriority: "mvp",
     trackingCategory: "hand",
-    trackingNotes: "Track fingertip-to-wrist ratios. Flag fingers that lag during extension. Tolerate partial range.",
+    trackingNotes: "Track fingertip-to-wrist ratios. Flag fingers that lag during extension. Tolerate partial range. Stop signal: new pain or worsening symptoms.",
   },
   {
     id: "finger_spreading",
@@ -29,7 +29,7 @@ export const HAND_SCENARIOS = [
     gameInteraction: "Light up four colored targets.",
     releasePriority: "mvp",
     trackingCategory: "hand",
-    trackingNotes: "Detect thumb-tip to finger-tip contact. Requires precise landmark stability.",
+    trackingNotes: "Detect thumb-tip to finger-tip contact (thumb opposition). Requires precise landmark stability across all four fingertips.",
   },
   {
     id: "wrist_bending",
@@ -38,7 +38,7 @@ export const HAND_SCENARIOS = [
     gameInteraction: "Guide a floating object vertically.",
     releasePriority: "mvp",
     trackingCategory: "hand",
-    trackingNotes: "Track wrist angle relative to forearm. Ensure forearm stays supported.",
+    trackingNotes: "Track wrist angle relative to forearm. Keep fingers relaxed. Ensure forearm stays supported on a surface.",
   },
   {
     id: "wrist_side_to_side",
@@ -47,7 +47,7 @@ export const HAND_SCENARIOS = [
     gameInteraction: "Move a boat between nearby markers.",
     releasePriority: "mvp",
     trackingCategory: "hand",
-    trackingNotes: "Track radial/ulnar deviation. Small range of motion expected.",
+    trackingNotes: "Track radial/ulnar deviation. Small range of motion expected. Do not rotate the forearm during this exercise.",
   },
   {
     id: "forearm_rotation",
@@ -56,7 +56,7 @@ export const HAND_SCENARIOS = [
     gameInteraction: "Rotate a virtual leaf to catch light.",
     releasePriority: "next_release",
     trackingCategory: "hand",
-    trackingNotes: "Pronation/supination. 2D tracking has limited depth sensitivity; note limitations.",
+    trackingNotes: "Pronation/supination — keep elbow bent and tucked against the side. 2D tracking has limited depth sensitivity; note limitations.",
   },
   {
     id: "tendon_glides",
@@ -65,7 +65,7 @@ export const HAND_SCENARIOS = [
     gameInteraction: "Step through illustrated poses, with optional manual confirmation.",
     releasePriority: "clinician_configured",
     trackingCategory: "hand",
-    trackingNotes: "Clinician-configured. Not available for ordinary benchmark testing.",
+    trackingNotes: "Clinician-configured. Sequence: straight → hook (bend middle/end joints, keep knuckles straight) → comfortable full fist → straight. Not available for ordinary benchmark testing.",
   },
 ];
 
