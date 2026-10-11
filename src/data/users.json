@@ -1,0 +1,33 @@
+[
+  {
+    "id": "u1", "name": "Maria Lopez", "age": 67, "condition": "Post-stroke, right-side weakness",
+    "therapist_id": "t1", "dominant_hand": "right",
+    "goal": { "daily_reps_target": 15, "weekly_reps_target": 60 },
+    "sessions": [
+      { "days_ago": 0, "exercises": ["Hand Open-Close (right)"], "reps_completed": 6, "target_reps": 9, "corrections_count": 4, "duration_seconds": 240 },
+      { "days_ago": 1, "exercises": ["Hand Open-Close (both)", "Finger Spreads (right)"], "reps_completed": 12, "target_reps": 12, "corrections_count": 3, "duration_seconds": 420 },
+      { "days_ago": 2, "exercises": ["Finger Spreads (right)"], "reps_completed": 9, "target_reps": 9, "corrections_count": 2, "duration_seconds": 300 },
+      { "days_ago": 4, "exercises": ["Hand Open-Close (right)"], "reps_completed": 5, "target_reps": 9, "corrections_count": 5, "duration_seconds": 260 }
+    ]
+  },
+  {
+    "id": "u2", "name": "James Carter", "age": 34, "condition": "Spinal cord injury (C6), wheelchair user",
+    "therapist_id": "t1", "dominant_hand": "left",
+    "goal": { "daily_reps_target": 20, "weekly_reps_target": 100 },
+    "sessions": [
+      { "days_ago": 0, "exercises": ["Hand Open-Close (both)", "Finger Spreads (both)"], "reps_completed": 21, "target_reps": 18, "corrections_count": 1, "duration_seconds": 500 },
+      { "days_ago": 1, "exercises": ["Hand Open-Close (both)"], "reps_completed": 18, "target_reps": 18, "corrections_count": 2, "duration_seconds": 450 },
+      { "days_ago": 2, "exercises": ["Finger Spreads (left)"], "reps_completed": 15, "target_reps": 15, "corrections_count": 0, "duration_seconds": 380 },
+      { "days_ago": 3, "exercises": ["Hand Open-Close (both)"], "reps_completed": 20, "target_reps": 18, "corrections_count": 1, "duration_seconds": 470 }
+    ]
+  },
+  {
+    "id": "u3", "name": "Aiko Tanaka", "age": 52, "condition": "Rheumatoid arthritis, both hands",
+    "therapist_id": "t2", "dominant_hand": "right",
+    "goal": { "daily_reps_target": 12, "weekly_reps_target": 50 },
+    "sessions": [
+      { "days_ago": 1, "exercises": ["Finger Spreads (both)"], "reps_completed": 8, "target_reps": 12, "corrections_count": 3, "duration_seconds": 300 },
+      { "days_ago": 3, "exercises": ["Hand Open-Close (both)"], "reps_completed": 10, "target_reps": 12, "corrections_count": 2, "duration_seconds": 320 }
+    ]
+  }
+]

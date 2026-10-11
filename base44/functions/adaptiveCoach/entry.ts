@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { guidanceFor } from '../../shared/exerciseGuidance.ts';
 
 // AdaptiveFit reasoning layer.
 // This is the "reasoning model" in the multimodal stack: it takes the vision
@@ -90,7 +91,7 @@ export default async function (req) {
       const deviation = body.deviation || "deviation detected";
       const poseSummary = body.poseSummary || "seated upper body visible";
       const recent = Array.isArray(body.recentCorrections) ? body.recentCorrections.slice(-3).join(" | ") : "";
-      const prompt = `You are a seated-exercise coach for a wheelchair user. Current exercise: ${exercise}. The vision system reported this deviation: ${deviation}. Pose context: ${poseSummary}. Recent corrections already given: ${recent || "none"}. Decide whether to speak a correction now (avoid nagging if it was just said). If yes, write ONE short, warm, specific correction a person with limited mobility can act on (under 14 words, no jargon). Identify the body part to highlight on screen. Return JSON.`;
+      const prompt = `You are a seated-exercise coach for a wheelchair user. Current exercise: ${exercise}. The vision system reported this deviation: ${deviation}. Pose context: ${poseSummary}. Recent corrections already given: ${recent || "none"}. Exercise guidance: ${guidanceFor(exercise)}. Decide whether to speak a correction now (avoid nagging if it was just said). If yes, write ONE short, warm, specific correction a person with limited mobility can act on (under 14 words, no jargon). Identify the body part to highlight on screen. Return JSON.`;
       const schema = {
         type: "object",
         properties: {
@@ -129,9 +130,12 @@ export default async function (req) {
       };
       const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, response_json_schema: schema });
       const data = res.data || res;
-      // Persist the session record (service role; public demo, single user).
+      // Persist the session record to the signed-in user's history.
       try {
-        await base44.asServiceRole.entities.SessionRecord.create({
+        const user = await base44.auth.me().catch(() => null);
+        if (user) await base44.asServiceRole.entities.SessionRecord.create({
+          user_id: user?.id || "",
+          user_email: user?.email || "",
           body_parts: body.bodyParts || [],
           exercises: exercises.map(e => e.name),
           reps_completed: totalReps,
@@ -155,7 +159,7 @@ export default async function (req) {
       const repCount = Number(body.repCount) || 0;
       const targetReps = Number(body.targetReps) || 10;
       const recent = Array.isArray(body.recentCorrections) ? body.recentCorrections.slice(-3).join(" | ") : "";
-      const prompt = `You are a seated-exercise coach for a wheelchair user, talking with them LIVE during ${exercise}. They just said: "${transcript}". Current reps: ${repCount}/${targetReps}. Recent things you said: ${recent || "none"}. Respond conversationally in ONE short sentence (under 16 words). Be warm, specific, and encouraging. If they clearly want to stop or be done, set should_finish true. If they ask about form, reps, or anything else, answer helpfully. No jargon. No em-dashes.`;
+      const prompt = `You are a seated-exercise coach for a wheelchair user, talking with them LIVE during ${exercise}. They just said: "${transcript}". Current reps: ${repCount}/${targetReps}. Recent things you said: ${recent || "none"}. Ground any advice in this exercise guidance knowledge base: ${guidanceFor(exercise)}. If they mention pain, numbness or tingling, tell them to stop and rest. Respond conversationally in ONE short sentence (under 20 words). Be warm, specific, and encouraging. If they clearly want to stop or be done, set should_finish true. If they ask about form, reps, or anything else, answer helpfully. No jargon. No em-dashes.`;
       const schema = {
         type: "object",
         properties: {
@@ -170,6 +174,37 @@ export default async function (req) {
         response: data.response || "Keep going, you're doing great.",
         should_finish: !!data.should_finish
       });
+    }
+
+    if (task === "therapistReport") {
+      const sessions = (Array.isArray(body.sessions) ? body.sessions : []).slice(0, 30).map(s => ({
+        date: String(s.date || "").slice(0, 10),
+        exercises: (Array.isArray(s.exercises) ? s.exercises : []).slice(0, 10).map(x => String(x).slice(0, 60)),
+        reps: Number(s.reps) || 0,
+        target: Number(s.target) || 0,
+        corrections: Number(s.corrections) || 0,
+        duration: Number(s.duration) || 0
+      }));
+      const prompt = `You are assisting an occupational therapist reviewing a client's home seated-exercise data from an AI movement coach (hand open-close, finger spreads, left/right/both hands). Client has limited mobility. Session log (most recent first): ${JSON.stringify(sessions)}. Daily rep goal ${Number(body.dailyTarget) || 15}, weekly ${Number(body.weeklyTarget) || 60}. Write a concise clinical-style report: an overall assessment, observed trends (adherence, completion rate, form corrections, side asymmetry if visible), concerns to watch, and 3-5 recommended therapy exercises with sets/reps and rationale, gentle and appropriate for limited mobility. Note this is decision support, final judgment rests with the therapist. No em-dashes.`;
+      const schema = {
+        type: "object",
+        properties: {
+          assessment: { type: "string" },
+          trends: { type: "array", items: { type: "string" } },
+          concerns: { type: "array", items: { type: "string" } },
+          recommendations: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { exercise: { type: "string" }, dosage: { type: "string" }, rationale: { type: "string" } },
+              required: ["exercise", "dosage", "rationale"]
+            }
+          }
+        },
+        required: ["assessment", "trends", "recommendations"]
+      };
+      const res = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt, response_json_schema: schema });
+      return Response.json(res.data || res);
     }
 
     return Response.json({ error: "Unknown task" }, { status: 400 });
