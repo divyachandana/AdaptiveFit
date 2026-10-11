@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { buildStats } from "@/lib/af/dashboardStats";
+import { getPatient } from "@/lib/af/mockDb";
 import RingStat from "@/components/dashboard/RingStat";
 import WeekChart from "@/components/dashboard/WeekChart";
 import Rewards from "@/components/dashboard/Rewards";
@@ -13,6 +14,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     (async () => {
+      const patientId = new URLSearchParams(window.location.search).get("patient");
+      if (patientId) {
+        const p = await getPatient(patientId);
+        if (p) { setData({ goal: p.goal, stats: buildStats(p.rows, p.goal.daily_reps_target), sessions: p.sessions, patient: p }); return; }
+      }
       const since = new Date(); since.setHours(0, 0, 0, 0); since.setDate(since.getDate() - 60);
       const [goalRes, agg, recent] = await Promise.all([
         base44.entities.Goal.filter({}, { limit: 1 }),
@@ -30,7 +36,8 @@ export default function Dashboard() {
         <div className="flex items-center justify-between print:hidden">
           <Link to="/" className="inline-flex items-center gap-2 h-12 px-4 rounded-xl border-2 border-neutral-950 font-semibold"><ArrowLeft className="w-5 h-5" /> Back to coach</Link>
         </div>
-        <h1 className="text-4xl font-bold tracking-tight">Your progress</h1>
+        <h1 className="text-4xl font-bold tracking-tight">{data?.patient ? `${data.patient.name}'s progress` : "Your progress"}</h1>
+        {data?.patient && <p className="text-neutral-700 -mt-4">{data.patient.condition} · <Link to="/therapist" className="underline font-semibold print:hidden">All patients</Link></p>}
         {!data ? (
           <div className="py-24 grid place-items-center"><Loader2 className="w-8 h-8 animate-spin" /></div>
         ) : (

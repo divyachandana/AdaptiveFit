@@ -284,7 +284,10 @@ export default function AdaptiveFit() {
           <div className="w-9 h-9 rounded-xl bg-neutral-900 text-white grid place-items-center font-bold">A</div>
           <span className="font-semibold text-neutral-900 tracking-tight">AdaptiveFit</span>
         </div>
-        <Link to="/dashboard" className="h-11 px-4 inline-flex items-center rounded-xl bg-neutral-900 text-white text-sm font-semibold">Progress dashboard</Link>
+        <div className="flex gap-2">
+          <Link to="/therapist" className="h-11 px-4 inline-flex items-center rounded-xl border-2 border-neutral-900 text-sm font-semibold">Therapist portal</Link>
+          <Link to="/dashboard" className="h-11 px-4 inline-flex items-center rounded-xl bg-neutral-900 text-white text-sm font-semibold">Progress dashboard</Link>
+        </div>
       </header>
 
       {phase === "setup" && (

@@ -1,0 +1,15 @@
+[
+  {
+    "id": "t1", "name": "Dr. Priya Shah, OTR/L", "specialty": "Neuro rehabilitation", "clinic": "Bayview Rehab Center",
+    "suggested_exercises": [
+      { "exercise": "Hand Open-Close", "dosage": "3 sets of 3, affected side", "rationale": "Builds active finger flexion and extension" },
+      { "exercise": "Finger Spreads", "dosage": "2 sets of 5, both hands", "rationale": "Improves intrinsic hand muscle control" }
+    ]
+  },
+  {
+    "id": "t2", "name": "Sam Rivera, OT", "specialty": "Hand therapy (CHT)", "clinic": "Coastal Hand Clinic",
+    "suggested_exercises": [
+      { "exercise": "Gentle Finger Spreads", "dosage": "2 sets of 3, pain-free range", "rationale": "Maintains joint mobility without flare-ups" }
+    ]
+  }
+]
