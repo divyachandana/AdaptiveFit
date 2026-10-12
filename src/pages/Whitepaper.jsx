@@ -136,7 +136,7 @@ export default function Whitepaper() {
             {[
               { stat: "80M", label: "People likely to need a wheelchair, about 1% of the world's population", source: "WHO", href: "https://www.who.int/teams/health-product-policy-and-standards/assistive-and-medical-technology/assistive-technology/wheelchair-services" },
               { stat: "47%", label: "Of U.S. adults with disabilities (ages 18 to 64) get no aerobic physical activity", source: "CDC, 2014", href: "https://archive.cdc.gov/www_cdc_gov/media/releases/2014/p0506-disability-activity.html" },
-              { stat: "3x", label: "Working-age adults with disabilities are 3 times as likely to have heart disease, stroke, diabetes, or cancer", source: "CDC, 2014", href: "https://archive.cdc.gov/www_cdc_gov/media/releases/2014/p0506-disability-activity.html" },
+              { stat: "3x", label: "Working-age adults with disabilities are 3 times as likely as adults without disabilities to have heart disease, stroke, diabetes, or cancer", source: "CDC, 2014", href: "https://archive.cdc.gov/www_cdc_gov/media/releases/2014/p0506-disability-activity.html" },
             ].map((c) => (
               <div key={c.stat} className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-6">
                 <div className="text-4xl font-bold text-emerald-400">{c.stat}</div>
