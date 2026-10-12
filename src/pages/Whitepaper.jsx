@@ -130,17 +130,18 @@ export default function Whitepaper() {
         <div className="max-w-5xl mx-auto">
           <span className="text-sm font-semibold text-emerald-400 uppercase tracking-wider">The Problem</span>
           <h2 className="text-4xl md:text-5xl font-bold mt-3 mb-8 leading-tight">
-            65 million people worldwide use wheelchairs. Exercise access remains a barrier.
+            About 80 million people need a wheelchair. Exercise access remains a barrier.
           </h2>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             {[
-              { stat: "65M+", label: "Wheelchair users globally who need seated exercise options" },
-              { stat: "0", label: "Accessible AI coaches that combine vision tracking with voice interaction" },
-              { stat: "3x", label: "Higher risk of secondary health complications without regular movement" },
+              { stat: "80M", label: "People likely to need a wheelchair, about 1% of the world's population", source: "WHO", href: "https://www.who.int/teams/health-product-policy-and-standards/assistive-and-medical-technology/assistive-technology/wheelchair-services" },
+              { stat: "47%", label: "Of U.S. adults with disabilities (ages 18 to 64) get no aerobic physical activity", source: "CDC, 2014", href: "https://archive.cdc.gov/www_cdc_gov/media/releases/2014/p0506-disability-activity.html" },
+              { stat: "3x", label: "Working-age adults with disabilities are 3 times as likely to have heart disease, stroke, diabetes, or cancer", source: "CDC, 2014", href: "https://archive.cdc.gov/www_cdc_gov/media/releases/2014/p0506-disability-activity.html" },
             ].map((c) => (
               <div key={c.stat} className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-6">
                 <div className="text-4xl font-bold text-emerald-400">{c.stat}</div>
                 <p className="text-sm text-white/60 mt-2 leading-relaxed">{c.label}</p>
+                <a href={c.href} target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-emerald-400/80 hover:text-emerald-300 underline underline-offset-2 mt-3">Source: {c.source}</a>
               </div>
             ))}
           </div>
